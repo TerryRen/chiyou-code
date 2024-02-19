@@ -1,0 +1,6 @@
+log:
+  logLevel: "info"  
+  logPath: "./logs"
+  logFileName: "mmc.log"
+  logFileRotationHours: 24
+  logFileMaxAgeHours: 240
