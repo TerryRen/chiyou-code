@@ -4,3 +4,6 @@ log:
   logFileName: "mmc.log"
   logFileRotationHours: 24
   logFileMaxAgeHours: 240
+db:
+  driverName: "mysql"
+  dataSourceName: "{user}:{password}@tcp({ip}:{port})/{db}"

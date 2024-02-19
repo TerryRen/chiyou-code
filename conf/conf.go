@@ -16,11 +16,19 @@ type LogConfig struct {
 	LogFileMaxAgeHours   int
 }
 
+type DatabaseConfig struct {
+	// mysql,sqlserver
+	DriverName string
+	// {user}:{password}@tcp({ip}:{port})/{db}
+	DataSourceName string
+}
+
 type JavaConfig struct {
 }
 
 type AppConfig struct {
 	Log  LogConfig
+	Db   DatabaseConfig
 	Java JavaConfig
 }
 
