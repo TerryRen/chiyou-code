@@ -1,16 +1,55 @@
 package app
 
 import (
-	"database/sql"
 	"time"
 
 	"chiyou.code/mmc/conf"
 	"chiyou.code/mmc/lib"
-	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 )
 
-func Run() error {
+type SqlColumn struct {
+	// Table Name
+	TableName string
+	// Column Name
+	ColumnName string
+	// Column Comment
+	ColumnComment string
+	// Column Type
+	ColumnType string
+	// Column Ordinal Position
+	ColumnOrdinal int
+	// Column Default
+	ColumnDefault string
+	// Is Nullable (YES, NO)
+	Nullable bool
+	// Column Key (PRI)
+	ColumnKey string
+	// Data Type (int, bigint, varchar, tinyint)
+	DataType string
+	// Character Maximum Length
+	CharMaxLength int
+	// Numeric Precision
+	NumberPrecision int
+	// Numeric Scale
+	NumberScale int
+}
+
+type SqlTable struct {
+	// Table Name
+	TableName string
+	// Table Comment
+	TableComment string
+	// Table Columns
+	Columns map[string]SqlColumn
+}
+
+type DataBaseMeta interface {
+	// fetch tables (contains columns)
+	GetTableMetas(dbConfig conf.DatabaseConfig) (tables map[string]SqlTable, err error)
+}
+
+func Run() {
 	config := conf.GetAppConfig()
 
 	// rotate log config
@@ -21,38 +60,22 @@ func Run() error {
 		time.Duration(config.Log.LogFileMaxAgeHours)*time.Hour,
 		time.Duration(config.Log.LogFileRotationHours)*time.Hour)
 
-	log.Info("[app] start...")
+	log.Info("[start]")
 
-	getTable(config.Db)
+	if config.Db.DriverName != "mysql" {
+		log.Fatalf("unSupported database driver: %v", config.Db.DriverName)
+		return
+	}
 
-	return nil
-}
+	var dbm DataBaseMeta = &MySqlMeta{}
 
-func getTable(dbConfig conf.DatabaseConfig) (err error) {
-	// Open a database connection
-	db, err := sql.Open(dbConfig.DriverName, dbConfig.DataSourceName)
+	log.Info("fetch table metadata start")
+	tables, err := dbm.GetTableMetas(config.Db)
 	if err != nil {
-		return err
+		log.Error("fetch table metadata with error: ", err)
 	}
-	defer db.Close()
+	log.Infof("fetch table metadata end, total: %v", len(tables))
+	// TODO other
 
-	// Execute the statement with parameter values
-	rows, err := db.Query("SHOW TABLES FROM cb_er;")
-	if err != nil {
-		return err
-	}
-
-	defer rows.Close()
-
-	// Loop over the rows and print the results
-	for rows.Next() {
-		var tableName string
-		err = rows.Scan(&tableName)
-		if err != nil {
-			return err
-		}
-		log.Info(tableName)
-	}
-
-	return nil
+	log.Info("[end]")
 }

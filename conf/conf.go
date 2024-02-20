@@ -21,6 +21,8 @@ type DatabaseConfig struct {
 	DriverName string
 	// {user}:{password}@tcp({ip}:{port})/{db}
 	DataSourceName string
+	// {db}
+	DataBase string
 }
 
 type JavaConfig struct {

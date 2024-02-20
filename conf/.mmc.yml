@@ -7,3 +7,4 @@ log:
 db:
   driverName: "mysql"
   dataSourceName: "{user}:{password}@tcp({ip}:{port})/{db}"
+  dataBase: "{db}"
