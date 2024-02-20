@@ -11,3 +11,9 @@ db:
 java:
   templateFolder: "./templates/java"
   outputFolder: "./output/java"
+  basePackage: "{base-package}"
+  ignorePrefix: ""
+  ignoreSuffix: ""
+  ignoreColumns:
+    - "TransactionNumber"
+    - "inUser"

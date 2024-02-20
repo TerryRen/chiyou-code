@@ -1,3 +1,31 @@
-Hello, {{.Name}}!
-You are {{.Age}} years old.
-You have {{len .Friends}} friends: {{range .Friends}}{{.}}, {{end}}
+package {{.BasePackage}}.model.po;
+
+import {{.BasePackage}}.model.BaseModel;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.experimental.Accessors;
+import org.hibernate.validator.constraints.Range;
+import javax.validation.constraints.*;
+import java.math.BigDecimal;
+
+/**
+ *
+ * {{.TableComment}}
+ *
+ * @author : tr29
+ * @version : Version 1.0
+ * @date : {{.CreateTime}}
+ */
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString
+@Accessors(chain = true)
+@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
+public class {{.TableClassName}} extends BaseModel {
+    private static final long serialVersionUID = ${@com.xstv.framework.core.utils.UidGenerator.genLongUid()}L;
+    //${@com.xstv.autocode.db.beetl.BeetlModelUtil.genPrivateField(columns,executeFields)}
+}

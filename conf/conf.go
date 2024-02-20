@@ -25,17 +25,25 @@ type DatabaseConfig struct {
 	DataBase string
 }
 
-type JavaConfig struct {
+type RenderConfig struct {
 	// Template folder
 	TemplateFolder string
 	// Output folder
 	OutputFolder string
+	// Base Package
+	BasePackage string
+	// Ignore Prefix
+	IgnorePrefix string
+	// Ignore Suffix
+	IgnoreSuffix string
+	// Ignore Columns
+	IgnoreColumns []string
 }
 
 type AppConfig struct {
 	Log  LogConfig
 	Db   DatabaseConfig
-	Java JavaConfig
+	Java RenderConfig
 }
 
 // config is a package-level variable that stores the configuration object

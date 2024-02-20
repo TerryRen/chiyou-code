@@ -79,9 +79,9 @@ func RunJava() {
 	log.Infof("fetch table metadata end, total: %v", len(tables))
 
 	for tabName, table := range tables {
-		log.Info("==================================")
-		log.Infof("table: %v", tabName)
-		log.Info("==================================")
+		log.Debug("==================================")
+		log.Debugf("table: %v", tabName)
+		log.Debug("==================================")
 
 		var colComment, colDefault string
 		for colName, column := range table.Columns {
@@ -95,7 +95,7 @@ func RunJava() {
 				colDefault = *column.ColumnDefault
 			}
 
-			log.Infof("column: %v | %v | %v | %v | %v",
+			log.Debugf("column: %v | %v | %v | %v | %v",
 				colName,
 				colComment,
 				column.ColumnType,
