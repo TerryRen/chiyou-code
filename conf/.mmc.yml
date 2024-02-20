@@ -8,3 +8,6 @@ db:
   driverName: "mysql"
   dataSourceName: "{user}:{password}@tcp({ip}:{port})/{db}"
   dataBase: "{db}"
+java:
+  templateFolder: "./templates/java"
+  outputFolder: "./output/java"

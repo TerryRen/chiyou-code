@@ -26,6 +26,10 @@ type DatabaseConfig struct {
 }
 
 type JavaConfig struct {
+	// Template folder
+	TemplateFolder string
+	// Output folder
+	OutputFolder string
 }
 
 type AppConfig struct {

@@ -14,7 +14,7 @@ var javaCmd = &cobra.Command{
 	Short: "mmc java",
 	Long:  `mmc java command`,
 	Run: func(cmd *cobra.Command, args []string) {
-		app.Run()
+		app.RunJava()
 	},
 }
 

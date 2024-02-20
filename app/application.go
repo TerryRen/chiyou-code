@@ -45,11 +45,12 @@ type SqlTable struct {
 }
 
 type DataBaseMeta interface {
-	// fetch tables (contains columns)
+	// Fetch tables (contains columns)
 	GetTableMetas(dbConfig conf.DatabaseConfig) (tables map[string]SqlTable, err error)
 }
 
-func Run() {
+// Run java code gen
+func RunJava() {
 	config := conf.GetAppConfig()
 
 	// rotate log config
@@ -73,6 +74,7 @@ func Run() {
 	tables, err := dbm.GetTableMetas(config.Db)
 	if err != nil {
 		log.Error("fetch table metadata with error: ", err)
+		return
 	}
 	log.Infof("fetch table metadata end, total: %v", len(tables))
 
@@ -102,7 +104,13 @@ func Run() {
 			)
 		}
 	}
-	// TODO other
-
+	// Render
+	log.Info("[java] render start")
+	err = RenderJava(tables, config.Java)
+	if err != nil {
+		log.Error("[java] render with error: ", err)
+		return
+	}
+	log.Info("[java] render end")
 	log.Info("[end]")
 }
