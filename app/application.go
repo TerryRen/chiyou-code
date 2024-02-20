@@ -14,32 +14,32 @@ type SqlColumn struct {
 	// Column Name
 	ColumnName string
 	// Column Comment
-	ColumnComment string
+	ColumnComment *string
 	// Column Type
 	ColumnType string
 	// Column Ordinal Position
 	ColumnOrdinal int
 	// Column Default
-	ColumnDefault string
+	ColumnDefault *string
 	// Is Nullable (YES, NO)
 	Nullable bool
 	// Column Key (PRI)
-	ColumnKey string
+	ColumnKey *string
 	// Data Type (int, bigint, varchar, tinyint)
 	DataType string
 	// Character Maximum Length
-	CharMaxLength int
+	CharMaxLength *int
 	// Numeric Precision
-	NumberPrecision int
+	NumberPrecision *int
 	// Numeric Scale
-	NumberScale int
+	NumberScale *int
 }
 
 type SqlTable struct {
 	// Table Name
 	TableName string
 	// Table Comment
-	TableComment string
+	TableComment *string
 	// Table Columns
 	Columns map[string]SqlColumn
 }
@@ -75,6 +75,33 @@ func Run() {
 		log.Error("fetch table metadata with error: ", err)
 	}
 	log.Infof("fetch table metadata end, total: %v", len(tables))
+
+	for tabName, table := range tables {
+		log.Info("==================================")
+		log.Infof("table: %v", tabName)
+		log.Info("==================================")
+
+		var colComment, colDefault string
+		for colName, column := range table.Columns {
+			colComment = "NULL"
+			colDefault = "NULL"
+
+			if column.ColumnComment != nil {
+				colComment = *column.ColumnComment
+			}
+			if column.ColumnDefault != nil {
+				colDefault = *column.ColumnDefault
+			}
+
+			log.Infof("column: %v | %v | %v | %v | %v",
+				colName,
+				colComment,
+				column.ColumnType,
+				column.ColumnOrdinal,
+				colDefault,
+			)
+		}
+	}
 	// TODO other
 
 	log.Info("[end]")
