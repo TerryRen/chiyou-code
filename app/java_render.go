@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
@@ -14,10 +15,23 @@ import (
 
 // model.tmpl
 type Model struct {
-	BasePackage    string
-	TableComment   string
+	// Base Package
+	BasePackage string
+	// Table Comment
+	TableComment string
+	// Table Class Name
 	TableClassName string
-	CreateTime     string
+	// Create Time
+	CreateTime string
+	// Field Template String
+	Fields []string
+}
+
+type ModelField struct {
+	FieldComment    string
+	FieldAnnotation string
+	FieldType       string
+	FieldName       string
 }
 
 // Init template
@@ -63,10 +77,28 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab SqlTable)
 		TableComment:   tab.TableName,
 		TableClassName: str.UnderscoreToCamel(rep.Replace(tab.TableName)),
 		CreateTime:     time.Now().Format("2006-01-02 15:04:05"),
+		Fields:         make([]string, len(tab.Columns)),
 	}
 	if tab.TableComment != nil {
 		model.TableComment = *tab.TableComment
 	}
+
+	buf := &bytes.Buffer{}
+	for colName, column := range tab.Columns {
+		field := ModelField{
+			FieldComment:    *column.ColumnComment,
+			FieldAnnotation: "@Min(value = 0)",
+			FieldType:       "Integer",
+			FieldName:       colName,
+		}
+		err = t.ExecuteTemplate(buf, "model.field.tmpl", field)
+		if err != nil {
+			return err
+		}
+		model.Fields = append(model.Fields, buf.String())
+		buf.Reset()
+	}
+
 	// Create a text file to write the output
 	f, err := os.Create(filepath.Join(javaConf.OutputFolder, model.TableClassName+".java"))
 	if err != nil {
