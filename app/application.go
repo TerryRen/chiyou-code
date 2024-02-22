@@ -8,6 +8,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const (
+	DB_TYPE_MYSQL = "Mysql"
+)
+
 type SqlColumn struct {
 	// Table Name
 	TableName string
@@ -23,7 +27,11 @@ type SqlColumn struct {
 	ColumnDefault *string
 	// Is Nullable (YES, NO)
 	Nullable bool
-	// Column Key (PRI)
+	// Column Key
+	// 1. PRI (the column is a PRIMARY KEY or is one of the columns in a multiple-column PRIMARY KEY)
+	// 2. UNI (the column is the first column of a UNIQUE index)
+	// 3. MUL (the column is the first column of a nonunique index in which multiple occurrences of a given value are permitted within the column)
+	// 4. empty (default column)
 	ColumnKey *string
 	// Data Type (int, bigint, varchar, tinyint)
 	DataType string
@@ -33,13 +41,21 @@ type SqlColumn struct {
 	NumberPrecision *int
 	// Numeric Scale
 	NumberScale *int
+	// Class Field Name
+	ClassFieldName string
+	// Class Field Type
+	ClassFieldType string
 }
 
 type SqlTable struct {
+	// Database Type
+	DbType string
 	// Table Name
 	TableName string
 	// Table Comment
 	TableComment *string
+	// Table Class Name
+	TableClassName string
 	// Table Columns
 	Columns map[string]SqlColumn
 }
@@ -68,6 +84,7 @@ func RunJava() {
 		return
 	}
 
+	// TODO: Verify DriverName (mysql support only)
 	var dbm DataBaseMeta = &MySqlMeta{}
 
 	log.Info("fetch table metadata start")
