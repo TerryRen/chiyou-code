@@ -80,10 +80,10 @@ type Model struct {
 }
 
 type ModelField struct {
-	FieldComment    string
-	FieldAnnotation string
-	FieldType       string
-	FieldName       string
+	FieldComment     string
+	FieldAnnotations []string
+	FieldType        string
+	FieldName        string
 }
 
 // Init template
@@ -100,10 +100,16 @@ func initTemplate(javaConf conf.RenderConfig) (t *template.Template, err error) 
 	}); err != nil {
 		return nil, err
 	}
-	t, err = template.ParseFiles(files...)
+	// Add user function
+	t, err = template.New("java").Funcs(template.FuncMap{
+		"sub": func(a, b int) int {
+			return a - b
+		},
+	}).ParseFiles(files...)
 	if err != nil {
 		return nil, err
 	}
+
 	return t, nil
 }
 
@@ -158,10 +164,10 @@ func buildAnnotation(name string, properties []string) string {
 	if len(properties) == 0 {
 		return name
 	}
-	return fmt.Sprintf("%v(%v)%v", name, strings.Join(properties, ", "), LF)
+	return fmt.Sprintf("%v(%v)", name, strings.Join(properties, ", "))
 }
 
-func buildStringFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
+func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
@@ -175,17 +181,19 @@ func buildStringFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
 		buildAnnotationProperty("description", description, true),
 		buildAnnotationProperty("example", example, true),
 	}
-	buf.WriteString(buildAnnotation("@Schema", ps1))
+	annotations = append(annotations, buildAnnotation("@Schema", ps1))
 
 	// @Size
 	ps2 := []string{
 		buildAnnotationProperty("min", "0", false),
 		buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
 	}
-	buf.WriteString(buildAnnotation("@Size", ps2))
+
+	annotations = append(annotations, buildAnnotation("@Size", ps2))
+	return
 }
 
-func buildDefaultFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
+func buildDefaultFieldAnnotation(column *SqlColumn) (annotations []string) {
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
@@ -199,26 +207,25 @@ func buildDefaultFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
 		buildAnnotationProperty("description", description, true),
 		buildAnnotationProperty("example", example, true),
 	}
-	buf.WriteString(buildAnnotation("@Schema", ps1))
+
+	annotations = append(annotations, buildAnnotation("@Schema", ps1))
+	return
 }
 
 // Build Field Annotation
-func buildFieldAnnotation(column *SqlColumn) string {
-	buf := &bytes.Buffer{}
+func buildFieldAnnotations(column *SqlColumn) (annotations []string) {
 	switch column.ClassFieldType {
 	case JAVA_TYPE_STRING:
-		buildStringFieldAnnotation(buf, column)
-
+		annotations = buildStringFieldAnnotation(column)
 	default:
-		buildDefaultFieldAnnotation(buf, column)
+		annotations = buildDefaultFieldAnnotation(column)
 	}
 
 	// @NotNull
 	if !column.Nullable {
-		buf.Write([]byte(buildAnnotation("@NotNull", nil)))
+		annotations = append(annotations, buildAnnotation("@NotNull", nil))
 	}
-
-	return buf.String()
+	return
 }
 
 // Render model object
@@ -228,7 +235,7 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 		TableComment:   tab.TableName,
 		TableClassName: tab.TableClassName,
 		CreateTime:     time.Now().Format("2006-01-02 15:04:05"),
-		Fields:         make([]string, len(tab.Columns)),
+		Fields:         make([]string, 0),
 	}
 	if tab.TableComment != nil {
 		model.TableComment = *tab.TableComment
@@ -245,7 +252,7 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 			field.FieldComment = *column.ColumnComment
 		}
 		// Build annotation
-		field.FieldAnnotation = buildFieldAnnotation(column)
+		field.FieldAnnotations = buildFieldAnnotations(column)
 		// Render java field
 		err = t.ExecuteTemplate(buf, TEMPLATE_MODEL_FIELD, field)
 		if err != nil {

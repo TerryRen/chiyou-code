@@ -1,6 +1,13 @@
-
     /**
      * {{.FieldComment}}
-     **/    
-    {{.FieldAnnotation}}
+     **/
+{{range $i, $el := .FieldAnnotations}}
+    {{- if eq $i 0 -}}
+            {{- "    " -}} {{- $el -}} {{"\n"}}
+    {{- else if eq $i (sub (len $.FieldAnnotations) 1) -}}
+            {{- "    " -}} {{- $el -}}
+    {{- else -}}
+            {{- "    " -}} {{- $el -}} {{"\n"}}
+    {{- end -}}
+{{- end}}
     private {{.FieldType}} {{.FieldName}};
