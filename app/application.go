@@ -57,7 +57,7 @@ type SqlTable struct {
 	// Table Class Name
 	TableClassName string
 	// Table Columns
-	Columns map[string]SqlColumn
+	Columns map[string]*SqlColumn
 }
 
 type DataBaseMeta interface {

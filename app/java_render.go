@@ -3,17 +3,21 @@ package app
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	"chiyou.code/mmc/conf"
 	"chiyou.code/mmc/lib/str"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
+	// Java Type
 	JAVA_TYPE_STRING     = "String"
 	JAVA_TYPE_BIGDECIMAL = "BigDecimal"
 	JAVA_TYPE_BOOLEAN    = "Boolean"
@@ -26,6 +30,10 @@ const (
 	JAVA_TYPE_TIME       = "Time"
 	JAVA_TYPE_TIMESTAMP  = "Timestamp"
 	JAVA_TYPE_DATE_TIME  = "LocalDateTime"
+	// Template
+	TEMPLATE_MODEL       = "model.tmpl"
+	TEMPLATE_MODEL_FIELD = "model.field.tmpl"
+	LF                   = "\n"
 )
 
 var (
@@ -114,22 +122,107 @@ func initOutputFolder(javaConf conf.RenderConfig) (err error) {
 }
 
 // Init Class Type (Field Type & Field Name)
-func initClassFieldType(javaConf conf.RenderConfig, tab SqlTable) (err error) {
+func initClassFieldType(javaConf conf.RenderConfig, tab *SqlTable) (err error) {
 	// Class
 	rep := strings.NewReplacer(javaConf.IgnorePrefix, "", javaConf.IgnoreSuffix, "")
-	tab.TableClassName = str.UnderscoreToCamel(rep.Replace(tab.TableName))
+	tab.TableClassName = str.UnderscoreToCapitalizeCamel(rep.Replace(tab.TableName))
 	// Field
 	for _, column := range tab.Columns {
-
-		column.ClassFieldName = ""
-		column.ClassFieldType = ""
+		upperDataType := strings.ToUpper(column.DataType)
+		if upperDataType == "TINYINT" && strings.ToUpper(column.ColumnType) == "TINYINT(1)" {
+			column.ClassFieldType = JAVA_TYPE_BOOLEAN
+		} else {
+			if tp, ok := JAVA_TYPE_MAP[upperDataType]; ok {
+				column.ClassFieldType = tp
+			} else {
+				return fmt.Errorf("data type: %v mappping failed", column.DataType)
+			}
+		}
+		column.ClassFieldName = str.UnderscoreToLowerCamel(column.ColumnName)
 	}
-
 	return nil
 }
 
+// Build annotation property (ex: example = "null")
+func buildAnnotationProperty(name string, value string, quote bool) string {
+	if quote {
+		value = `"` + strings.Trim(value, " ") + `"`
+	} else {
+		value = strings.Trim(value, " ")
+	}
+	return fmt.Sprintf("%v = %v", name, value)
+}
+
+// Build annotation property (ex: @Schema(description = "package count", example = "null") )
+func buildAnnotation(name string, properties []string) string {
+	if len(properties) == 0 {
+		return name
+	}
+	return fmt.Sprintf("%v(%v)%v", name, strings.Join(properties, ", "), LF)
+}
+
+func buildStringFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
+	// @Schema
+	description := column.ColumnName
+	if column.ColumnComment != nil {
+		description = *column.ColumnComment
+	}
+	example := ""
+	if column.ColumnDefault != nil {
+		example = *column.ColumnDefault
+	}
+	ps1 := []string{
+		buildAnnotationProperty("description", description, true),
+		buildAnnotationProperty("example", example, true),
+	}
+	buf.WriteString(buildAnnotation("@Schema", ps1))
+
+	// @Size
+	ps2 := []string{
+		buildAnnotationProperty("min", "0", false),
+		buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
+	}
+	buf.WriteString(buildAnnotation("@Size", ps2))
+}
+
+func buildDefaultFieldAnnotation(buf *bytes.Buffer, column *SqlColumn) {
+	// @Schema
+	description := column.ColumnName
+	if column.ColumnComment != nil {
+		description = *column.ColumnComment
+	}
+	example := ""
+	if column.ColumnDefault != nil {
+		example = *column.ColumnDefault
+	}
+	ps1 := []string{
+		buildAnnotationProperty("description", description, true),
+		buildAnnotationProperty("example", example, true),
+	}
+	buf.WriteString(buildAnnotation("@Schema", ps1))
+}
+
+// Build Field Annotation
+func buildFieldAnnotation(column *SqlColumn) string {
+	buf := &bytes.Buffer{}
+	switch column.ClassFieldType {
+	case JAVA_TYPE_STRING:
+		buildStringFieldAnnotation(buf, column)
+
+	default:
+		buildDefaultFieldAnnotation(buf, column)
+	}
+
+	// @NotNull
+	if !column.Nullable {
+		buf.Write([]byte(buildAnnotation("@NotNull", nil)))
+	}
+
+	return buf.String()
+}
+
 // Render model object
-func renderModel(t *template.Template, javaConf conf.RenderConfig, tab SqlTable) (err error) {
+func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable) (err error) {
 	var model Model = Model{
 		BasePackage:    javaConf.BasePackage,
 		TableComment:   tab.TableName,
@@ -144,16 +237,17 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab SqlTable)
 	buf := &bytes.Buffer{}
 	for colName, column := range tab.Columns {
 		field := ModelField{
-			FieldComment:    colName,
-			FieldAnnotation: "@Min(value = 0)",
-			FieldType:       column.ClassFieldType,
-			FieldName:       column.ClassFieldName,
+			FieldComment: colName,
+			FieldType:    column.ClassFieldType,
+			FieldName:    column.ClassFieldName,
 		}
 		if column.ColumnComment != nil {
 			field.FieldComment = *column.ColumnComment
 		}
-
-		err = t.ExecuteTemplate(buf, "model.field.tmpl", field)
+		// Build annotation
+		field.FieldAnnotation = buildFieldAnnotation(column)
+		// Render java field
+		err = t.ExecuteTemplate(buf, TEMPLATE_MODEL_FIELD, field)
 		if err != nil {
 			return err
 		}
@@ -168,7 +262,7 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab SqlTable)
 	}
 	defer f.Close()
 
-	err = t.ExecuteTemplate(f, "model.tmpl", model)
+	err = t.ExecuteTemplate(f, TEMPLATE_MODEL, model)
 	if err != nil {
 		return err
 	}
@@ -187,12 +281,18 @@ func RenderJava(tables map[string]SqlTable, javaConf conf.RenderConfig) (err err
 	// Loop over the tables
 	for _, tab := range tables {
 		// TODO Exclude pattern filter
+
 		// Init Class Type
-		initClassFieldType(javaConf, tab)
-		// Render Model File
-		err = renderModel(t, javaConf, tab)
+		err = initClassFieldType(javaConf, &tab)
 		if err != nil {
-			return err
+			log.Errorf("table [%v] init class field type with error: %v", tab.TableName, err)
+			continue
+		}
+		// Render Model File
+		err = renderModel(t, javaConf, &tab)
+		if err != nil {
+			log.Errorf("table [%v] render model with error: %v", tab.TableName, err)
+			continue
 		}
 	}
 	return nil

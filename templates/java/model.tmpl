@@ -26,6 +26,5 @@ import java.math.BigDecimal;
 @Accessors(chain = true)
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class {{.TableClassName}} extends BaseModel {
-    private static final long serialVersionUID = ${@com.xstv.framework.core.utils.UidGenerator.genLongUid()}L;
-    //${@com.xstv.autocode.db.beetl.BeetlModelUtil.genPrivateField(columns,executeFields)}
+{{range .Fields}}{{.}}{{end}}
 }

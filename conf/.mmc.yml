@@ -12,8 +12,8 @@ java:
   templateFolder: "./templates/java"
   outputFolder: "./output/java"
   basePackage: "{base-package}"
-  ignorePrefix: ""
-  ignoreSuffix: ""
-  ignoreColumns:
+  ignorePrefix: "test_"
+  ignoreSuffix: "_test"
+  excludeColumns:
     - "TransactionNumber"
-    - "inUser"
+    - "InUser"

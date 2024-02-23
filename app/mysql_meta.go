@@ -48,7 +48,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION ASC;
 
 	// Loop over the tables
 	for tabs.Next() {
-		var tab SqlTable = SqlTable{DbType: DB_TYPE_MYSQL, Columns: make(map[string]SqlColumn)}
+		var tab SqlTable = SqlTable{DbType: DB_TYPE_MYSQL, Columns: make(map[string]*SqlColumn)}
 		err = tabs.Scan(&tab.TableName, &tab.TableComment)
 		if err != nil {
 			return nil, err
@@ -69,7 +69,7 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION ASC;
 
 		// Set table column
 		if tab, ok := tables[col.TableName]; ok {
-			tab.Columns[col.ColumnName] = col
+			tab.Columns[col.ColumnName] = &col
 		}
 	}
 	cols.Close()

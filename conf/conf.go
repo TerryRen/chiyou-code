@@ -36,8 +36,10 @@ type RenderConfig struct {
 	IgnorePrefix string
 	// Ignore Suffix
 	IgnoreSuffix string
-	// Ignore Columns
-	IgnoreColumns []string
+	// Exclude Table Regex
+	ExcludeTableRegex string
+	// Exclude Columns
+	ExcludeColumns []string
 }
 
 type AppConfig struct {
