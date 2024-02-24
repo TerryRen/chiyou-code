@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -67,6 +68,10 @@ var (
 
 // model.tmpl
 type Model struct {
+	// Author
+	Author string
+	// Version
+	Version string
 	// Base Package
 	BasePackage string
 	// Table Comment
@@ -87,9 +92,9 @@ type ModelField struct {
 }
 
 // Init template
-func initTemplate(javaConf conf.RenderConfig) (t *template.Template, err error) {
+func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error) {
 	var files []string
-	if err = filepath.Walk(javaConf.TemplateFolder, func(path string, info os.FileInfo, err error) error {
+	if err = filepath.Walk(renderConf.TemplateFolder, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -114,12 +119,12 @@ func initTemplate(javaConf conf.RenderConfig) (t *template.Template, err error) 
 }
 
 // Init output folder
-func initOutputFolder(javaConf conf.RenderConfig) (err error) {
+func initOutputFolder(renderConf conf.RenderConfig) (err error) {
 	// Check if the directory exists
-	_, err = os.Stat(javaConf.OutputFolder)
+	_, err = os.Stat(renderConf.OutputFolder)
 	if errors.Is(err, os.ErrNotExist) {
 		// Create the directory if it does not exist
-		err = os.MkdirAll(javaConf.OutputFolder, os.ModePerm)
+		err = os.MkdirAll(renderConf.OutputFolder, os.ModePerm)
 		if err != nil {
 			return err
 		}
@@ -128,9 +133,9 @@ func initOutputFolder(javaConf conf.RenderConfig) (err error) {
 }
 
 // Init Class Type (Field Type & Field Name)
-func initClassFieldType(javaConf conf.RenderConfig, tab *SqlTable) (err error) {
+func initClassFieldType(renderConf conf.RenderConfig, tab *SqlTable) (err error) {
 	// Class
-	rep := strings.NewReplacer(javaConf.IgnorePrefix, "", javaConf.IgnoreSuffix, "")
+	rep := strings.NewReplacer(renderConf.IgnorePrefix, "", renderConf.IgnoreSuffix, "")
 	tab.TableClassName = str.UnderscoreToCapitalizeCamel(rep.Replace(tab.TableName))
 	// Field
 	for _, column := range tab.Columns {
@@ -313,8 +318,7 @@ func buildBooleanFieldAnnotation(column *SqlColumn) (annotations []string) {
 	}
 	example := "null"
 	if column.ColumnDefault != nil {
-		b, err := strconv.ParseBool(*column.ColumnDefault)
-		if err != nil {
+		if b, err := strconv.ParseBool(*column.ColumnDefault); err == nil {
 			example = strconv.FormatBool(b)
 		}
 	}
@@ -360,9 +364,11 @@ func buildFieldAnnotations(column *SqlColumn) (annotations []string) {
 }
 
 // Render model object
-func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable) (err error) {
+func renderModel(t *template.Template, renderConf conf.RenderConfig, tab *SqlTable) (err error) {
 	var model Model = Model{
-		BasePackage:    javaConf.BasePackage,
+		Author:         renderConf.Author,
+		Version:        renderConf.Version,
+		BasePackage:    renderConf.BasePackage,
 		TableComment:   tab.TableName,
 		TableClassName: tab.TableClassName,
 		CreateTime:     time.Now().Format("2006-01-02 15:04:05"),
@@ -372,12 +378,20 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 		model.TableComment = *tab.TableComment
 	}
 
+	columnNames := make([]string, 0, len(tab.Columns))
+	for k := range tab.Columns {
+		columnNames = append(columnNames, k)
+	}
+	// Sort the tab by column ordinal
+	sort.SliceStable(columnNames, func(i, j int) bool {
+		return tab.Columns[columnNames[i]].ColumnOrdinal < tab.Columns[columnNames[j]].ColumnOrdinal
+	})
+	// Iterate over the sorted tab
 	buf := &bytes.Buffer{}
-	// TODO Order by Column Ordinal
-
-	for colName, column := range tab.Columns {
+	for _, k := range columnNames {
+		column := tab.Columns[k]
 		field := ModelField{
-			FieldComment: colName,
+			FieldComment: column.ColumnName,
 			FieldType:    column.ClassFieldType,
 			FieldName:    column.ClassFieldName,
 		}
@@ -386,7 +400,7 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 		}
 		// Build annotation
 		field.FieldAnnotations = buildFieldAnnotations(column)
-		// Render java field
+		// Render java model.field
 		err = t.ExecuteTemplate(buf, TEMPLATE_MODEL_FIELD, field)
 		if err != nil {
 			return err
@@ -394,28 +408,28 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 		model.Fields = append(model.Fields, buf.String())
 		buf.Reset()
 	}
-
 	// Create a text file to write the output
-	f, err := os.Create(filepath.Join(javaConf.OutputFolder, model.TableClassName+".java"))
+	f, err := os.Create(filepath.Join(renderConf.OutputFolder, model.TableClassName+".java"))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-
+	// Render java model
 	err = t.ExecuteTemplate(f, TEMPLATE_MODEL, model)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func RenderJava(tables map[string]SqlTable, javaConf conf.RenderConfig) (err error) {
-	log.Info("[java] render start")
-	t, err := initTemplate(javaConf)
+func RenderJava(tables map[string]SqlTable, renderConf conf.RenderConfig) (err error) {
+	log.Info("[render] [java] start")
+	t, err := initTemplate(renderConf)
 	if err != nil {
 		return err
 	}
-	err = initOutputFolder(javaConf)
+	err = initOutputFolder(renderConf)
 	if err != nil {
 		return err
 	}
@@ -424,18 +438,18 @@ func RenderJava(tables map[string]SqlTable, javaConf conf.RenderConfig) (err err
 		// TODO Exclude pattern filter
 
 		// Init Class Type
-		err = initClassFieldType(javaConf, &tab)
+		err = initClassFieldType(renderConf, &tab)
 		if err != nil {
-			log.Errorf("table [%v] init class field type with error: %v", tab.TableName, err)
+			log.Errorf("[render] table [%v] init class field type with error: %v", tab.TableName, err)
 			continue
 		}
 		// Render Model File
-		err = renderModel(t, javaConf, &tab)
+		err = renderModel(t, renderConf, &tab)
 		if err != nil {
-			log.Errorf("table [%v] render model with error: %v", tab.TableName, err)
+			log.Errorf("[render] table [%v] model with error: %v", tab.TableName, err)
 			continue
 		}
 	}
-	log.Info("[java] render end")
+	log.Info("[render] [java] end")
 	return nil
 }

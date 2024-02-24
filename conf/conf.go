@@ -30,6 +30,10 @@ type RenderConfig struct {
 	TemplateFolder string
 	// Output folder
 	OutputFolder string
+	// Author
+	Author string
+	// Version
+	Version string
 	// Base Package
 	BasePackage string
 	// Ignore Prefix

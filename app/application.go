@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	DB_TYPE_MYSQL    = "Mysql"
-	CODE_TYPE_JAVA   = "Java"
-	CODE_TYPE_CSHARP = "CSharp"
+	DB_TYPE_MYSQL    = "mysql"
+	CODE_TYPE_JAVA   = "java"
+	CODE_TYPE_CSHARP = "csharp"
 )
 
 type SqlColumn struct {
@@ -91,13 +91,13 @@ func Run(codeType string) {
 		return
 	}
 
-	log.Info("fetch table metadata start")
+	log.Info("[fetch metadata] start")
 	tables, err := dbm.GetTableMetas(config.Db)
 	if err != nil {
-		log.Error("fetch table metadata with error: ", err)
+		log.Error("[fetch metadata] with error: ", err)
 		return
 	}
-	log.Infof("fetch table metadata end, total: %v", len(tables))
+	log.Infof("[fetch metadata] end, total: %v", len(tables))
 
 	for tabName, table := range tables {
 		log.Debug("==================================")
@@ -133,7 +133,7 @@ func Run(codeType string) {
 		err = fmt.Errorf("code type [%v] unSupported", codeType)
 	}
 	if err != nil {
-		log.Error("render with error: ", err)
+		log.Error("[render] with error: ", err)
 	}
 	log.Info("[end]")
 }
