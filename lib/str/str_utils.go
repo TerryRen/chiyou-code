@@ -1,6 +1,7 @@
 package str
 
 import (
+	"bytes"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -68,4 +69,12 @@ func FirstUpper(s string) string {
 
 func IsASCII(s string) bool {
 	return utf8.RuneCountInString(s) == len(s)
+}
+
+func RepeatString(count int, strs string) string {
+	buf := &bytes.Buffer{}
+	for i := 0; i < count; i++ {
+		buf.WriteString(strs)
+	}
+	return buf.String()
 }

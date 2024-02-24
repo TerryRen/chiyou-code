@@ -167,7 +167,29 @@ func buildAnnotation(name string, properties []string) string {
 	return fmt.Sprintf("%v(%v)", name, strings.Join(properties, ", "))
 }
 
+// Default @Schema(description="xxx" , example="null")
+func buildDefaultSchemaAnnotation(column *SqlColumn) (annotation string) {
+	// @Schema
+	description := column.ColumnName
+	if column.ColumnComment != nil {
+		description = *column.ColumnComment
+	}
+	example := "null"
+	if column.ColumnDefault != nil {
+		example = *column.ColumnDefault
+	}
+	ps1 := []string{
+		buildAnnotationProperty("description", description, true),
+		buildAnnotationProperty("example", example, true),
+	}
+	annotation = buildAnnotation("@Schema", ps1)
+
+	return
+}
+
+// String Annotation
 func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 2)
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
@@ -181,46 +203,155 @@ func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
 		buildAnnotationProperty("description", description, true),
 		buildAnnotationProperty("example", example, true),
 	}
-	annotations = append(annotations, buildAnnotation("@Schema", ps1))
+	annotations[0] = buildAnnotation("@Schema", ps1)
 
 	// @Size
 	ps2 := []string{
 		buildAnnotationProperty("min", "0", false),
 		buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
 	}
+	annotations[1] = buildAnnotation("@Size", ps2)
 
-	annotations = append(annotations, buildAnnotation("@Size", ps2))
 	return
 }
 
-func buildDefaultFieldAnnotation(column *SqlColumn) (annotations []string) {
+// Integer Annotation
+func buildIntegerFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 3)
+	// @Schema
+	annotations[0] = buildDefaultSchemaAnnotation(column)
+
+	// @Min
+	ps2 := []string{
+		buildAnnotationProperty("value", "0", false),
+	}
+	annotations[1] = buildAnnotation("@Min", ps2)
+
+	// @Max
+	ps3 := []string{
+		buildAnnotationProperty("value", "Integer.MAX_VALUE", false),
+	}
+	annotations[2] = buildAnnotation("@Max", ps3)
+
+	return
+}
+
+// Long Annotation
+func buildLongFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 3)
+	// @Schema
+	annotations[0] = buildDefaultSchemaAnnotation(column)
+
+	// @Min
+	ps2 := []string{
+		buildAnnotationProperty("value", "0L", false),
+	}
+	annotations[1] = buildAnnotation("@Min", ps2)
+
+	// @Max
+	ps3 := []string{
+		buildAnnotationProperty("value", "Long.MAX_VALUE", false),
+	}
+	annotations[2] = buildAnnotation("@Max", ps3)
+
+	return
+}
+
+// BigDecimal Annotation
+func buildBigDecimalFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 4)
+	min := fmt.Sprintf("%v.%v", "0", str.RepeatString(*column.NumberPrecision, "0"))
+	max := fmt.Sprintf("%v.%v",
+		str.RepeatString((*column.NumberPrecision)-(*column.NumberScale), "9"),
+		str.RepeatString(*column.NumberPrecision, "9"))
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
 		description = *column.ColumnComment
 	}
-	example := ""
+	example := "null"
 	if column.ColumnDefault != nil {
 		example = *column.ColumnDefault
 	}
 	ps1 := []string{
 		buildAnnotationProperty("description", description, true),
 		buildAnnotationProperty("example", example, true),
+		buildAnnotationProperty("minimum", min, true),
+		buildAnnotationProperty("maximum", max, true),
 	}
+	annotations[0] = buildAnnotation("@Schema", ps1)
 
-	annotations = append(annotations, buildAnnotation("@Schema", ps1))
+	// @Digits
+	ps2 := []string{
+		buildAnnotationProperty("integer", strconv.Itoa(*column.NumberPrecision), false),
+		buildAnnotationProperty("fraction", strconv.Itoa(*column.NumberScale), false),
+	}
+	annotations[1] = buildAnnotation("@Digits", ps2)
+
+	// @DecimalMin
+	ps3 := []string{
+		buildAnnotationProperty("value", min, true),
+	}
+	annotations[2] = buildAnnotation("@DecimalMin", ps3)
+
+	// @DecimalMax
+	ps4 := []string{
+		buildAnnotationProperty("value", max, true),
+	}
+	annotations[3] = buildAnnotation("@DecimalMax", ps4)
+
 	return
 }
 
-// Build Field Annotation
+// Boolean Annotation
+func buildBooleanFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 1)
+	// @Schema
+	description := column.ColumnName
+	if column.ColumnComment != nil {
+		description = *column.ColumnComment
+	}
+	example := "null"
+	if column.ColumnDefault != nil {
+		b, err := strconv.ParseBool(*column.ColumnDefault)
+		if err != nil {
+			example = strconv.FormatBool(b)
+		}
+	}
+	ps1 := []string{
+		buildAnnotationProperty("description", description, true),
+		buildAnnotationProperty("example", example, true),
+	}
+	annotations[0] = buildAnnotation("@Schema", ps1)
+
+	return
+}
+
+// Default Annotation
+func buildDefaultFieldAnnotation(column *SqlColumn) (annotations []string) {
+	annotations = make([]string, 1)
+	// @Schema
+	annotations[0] = buildDefaultSchemaAnnotation(column)
+
+	return
+}
+
+// Build Field Annotations
 func buildFieldAnnotations(column *SqlColumn) (annotations []string) {
 	switch column.ClassFieldType {
 	case JAVA_TYPE_STRING:
 		annotations = buildStringFieldAnnotation(column)
+	case JAVA_TYPE_INTEGER:
+		annotations = buildIntegerFieldAnnotation(column)
+	case JAVA_TYPE_LONG:
+		annotations = buildLongFieldAnnotation(column)
+	case JAVA_TYPE_BIGDECIMAL:
+		annotations = buildBigDecimalFieldAnnotation(column)
+	case JAVA_TYPE_BOOLEAN:
+		annotations = buildBooleanFieldAnnotation(column)
 	default:
 		annotations = buildDefaultFieldAnnotation(column)
 	}
-
 	// @NotNull
 	if !column.Nullable {
 		annotations = append(annotations, buildAnnotation("@NotNull", nil))
@@ -242,6 +373,8 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 	}
 
 	buf := &bytes.Buffer{}
+	// TODO Order by Column Ordinal
+
 	for colName, column := range tab.Columns {
 		field := ModelField{
 			FieldComment: colName,
@@ -277,6 +410,7 @@ func renderModel(t *template.Template, javaConf conf.RenderConfig, tab *SqlTable
 }
 
 func RenderJava(tables map[string]SqlTable, javaConf conf.RenderConfig) (err error) {
+	log.Info("[java] render start")
 	t, err := initTemplate(javaConf)
 	if err != nil {
 		return err
@@ -302,5 +436,6 @@ func RenderJava(tables map[string]SqlTable, javaConf conf.RenderConfig) (err err
 			continue
 		}
 	}
+	log.Info("[java] render end")
 	return nil
 }

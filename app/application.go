@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"time"
 
 	"chiyou.code/mmc/conf"
@@ -9,7 +10,9 @@ import (
 )
 
 const (
-	DB_TYPE_MYSQL = "Mysql"
+	DB_TYPE_MYSQL    = "Mysql"
+	CODE_TYPE_JAVA   = "Java"
+	CODE_TYPE_CSHARP = "CSharp"
 )
 
 type SqlColumn struct {
@@ -65,8 +68,8 @@ type DataBaseMeta interface {
 	GetTableMetas(dbConfig conf.DatabaseConfig) (tables map[string]SqlTable, err error)
 }
 
-// Run java code gen
-func RunJava() {
+// Run code gen
+func Run(codeType string) {
 	config := conf.GetAppConfig()
 
 	// rotate log config
@@ -79,13 +82,14 @@ func RunJava() {
 
 	log.Info("[start]")
 
-	if config.Db.DriverName != "mysql" {
-		log.Fatalf("unSupported database driver: %v", config.Db.DriverName)
+	var dbm DataBaseMeta
+	switch config.Db.DriverName {
+	case DB_TYPE_MYSQL:
+		dbm = &MySqlMeta{}
+	default:
+		log.Fatalf("database driver [%v] unSupported", config.Db.DriverName)
 		return
 	}
-
-	// TODO: Verify DriverName (mysql support only)
-	var dbm DataBaseMeta = &MySqlMeta{}
 
 	log.Info("fetch table metadata start")
 	tables, err := dbm.GetTableMetas(config.Db)
@@ -122,12 +126,14 @@ func RunJava() {
 		}
 	}
 	// Render
-	log.Info("[java] render start")
-	err = RenderJava(tables, config.Java)
-	if err != nil {
-		log.Error("[java] render with error: ", err)
-		return
+	switch codeType {
+	case CODE_TYPE_JAVA:
+		err = RenderJava(tables, config.Java)
+	default:
+		err = fmt.Errorf("code type [%v] unSupported", codeType)
 	}
-	log.Info("[java] render end")
+	if err != nil {
+		log.Error("render with error: ", err)
+	}
 	log.Info("[end]")
 }

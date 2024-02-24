@@ -5,7 +5,7 @@ log:
   logFileRotationHours: 24
   logFileMaxAgeHours: 240
 db:
-  driverName: "mysql"
+  driverName: "Mysql"
   dataSourceName: "{user}:{password}@tcp({ip}:{port})/{db}"
   dataBase: "{db}"
 java:

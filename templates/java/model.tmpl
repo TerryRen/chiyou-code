@@ -26,5 +26,11 @@ import java.math.BigDecimal;
 @Accessors(chain = true)
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class {{.TableClassName}} extends BaseModel {
-{{range .Fields}}{{.}}{{end}}
+{{range $i, $el := .Fields}}
+    {{- if eq $i (sub (len $.Fields) 1) -}}
+            {{- $el -}}
+    {{- else -}}
+            {{- $el -}} {{"\n"}}
+    {{- end -}}
+{{- end -}}
 }

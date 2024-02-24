@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 FF911
+Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 */
 package cmd
 
@@ -8,26 +8,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// javaCmd represents the java command
-var javaCmd = &cobra.Command{
-	Use:   "java",
-	Short: "mmc java",
-	Long:  `mmc java command`,
+// csharpCmd represents the csharp command
+var csharpCmd = &cobra.Command{
+	Use:   "csharp",
+	Short: "mmc csahrp",
+	Long:  `mmc csahrp command`,
 	Run: func(cmd *cobra.Command, args []string) {
-		app.Run(app.CODE_TYPE_JAVA)
+		app.Run(app.CODE_TYPE_CSHARP)
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(javaCmd)
+	rootCmd.AddCommand(csharpCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// javaCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// csharpCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// javaCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// csharpCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
