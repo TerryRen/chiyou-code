@@ -5,9 +5,13 @@
 <mapper namespace="{{.BasePackage}}.mapper.{{.TableClassName}}Mapper">
 
     <resultMap id="RM_{{.TableClassName}}" type="{{.BasePackage}}.model.po.{{.TableClassName}}">
-        {{- range $i, $el := .Columns -}}
-        <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>
-        {{- end -}}
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>
+    {{- else -}}
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>{{"\n"}}
+    {{- end -}}
+{{- end }}
     </resultMap>
 
 </mapper>
