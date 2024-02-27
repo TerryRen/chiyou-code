@@ -35,7 +35,8 @@
             {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
     {{- end -}}
 {{- end }}
-        ) VALUES
+        ) 
+        VALUES
         <foreach collection="list" item="item" separator=",">
         (
 {{ range $i, $el := .Columns -}}
@@ -48,5 +49,29 @@
         )
         </foreach>
     </insert>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKey}}">
+        INSERT INTO `{{.TableClassName}}` 
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+        ) 
+        VALUES
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} #{ {{- $el.ClassFieldName -}} }
+    {{- else -}}
+            {{- "        " -}} #{ {{- $el.ClassFieldName -}} }{{",\n"}}
+    {{- end -}}
+{{- end }}
+        )
+    </insert>
+
 
 </mapper>
