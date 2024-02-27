@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -34,6 +33,7 @@ const (
 	// Template
 	TEMPLATE_MODEL       = "model.tmpl"
 	TEMPLATE_MODEL_FIELD = "model.field.tmpl"
+	TEMPLATE_MYBATIS     = "mybatis.tmpl"
 	LF                   = "\n"
 )
 
@@ -67,7 +67,7 @@ var (
 )
 
 // model.tmpl
-type Model struct {
+type ModelView struct {
 	// Author
 	Author string
 	// Version
@@ -84,11 +84,37 @@ type Model struct {
 	Fields []string
 }
 
-type ModelField struct {
+// model.field.tmpl
+type ModelFieldView struct {
 	FieldComment     string
 	FieldAnnotations []string
 	FieldType        string
 	FieldName        string
+}
+
+// mybatis.tmpl
+type MybatisView struct {
+	// Base Package
+	BasePackage string
+	// Table Name
+	TableName string
+	// Table Class Name
+	TableClassName string
+	// Table Primary Key
+	TablePrimaryKey string
+	// Columns
+	Columns []*MybatisColumnView
+}
+
+type MybatisColumnView struct {
+	// Column Ordinal Position
+	ColumnOrdinal int
+	// Primary Key
+	IsPrimaryKey bool
+	// Column Name
+	ColumnName string
+	// Class Field Name
+	ClassFieldName string
 }
 
 // Init template
@@ -364,33 +390,23 @@ func buildFieldAnnotations(column *SqlColumn) (annotations []string) {
 }
 
 // Render model object
-func renderModel(t *template.Template, renderConf conf.RenderConfig, tab *SqlTable) (err error) {
-	var model Model = Model{
+func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+	var model ModelView = ModelView{
 		Author:         renderConf.Author,
 		Version:        renderConf.Version,
 		BasePackage:    renderConf.BasePackage,
-		TableComment:   tab.TableName,
-		TableClassName: tab.TableClassName,
+		TableComment:   table.TableName,
+		TableClassName: table.TableClassName,
 		CreateTime:     time.Now().Format("2006-01-02 15:04:05"),
 		Fields:         make([]string, 0),
 	}
-	if tab.TableComment != nil {
-		model.TableComment = *tab.TableComment
+	if table.TableComment != nil {
+		model.TableComment = *table.TableComment
 	}
-
-	columnNames := make([]string, 0, len(tab.Columns))
-	for k := range tab.Columns {
-		columnNames = append(columnNames, k)
-	}
-	// Sort the tab by column ordinal
-	sort.SliceStable(columnNames, func(i, j int) bool {
-		return tab.Columns[columnNames[i]].ColumnOrdinal < tab.Columns[columnNames[j]].ColumnOrdinal
-	})
 	// Iterate over the sorted tab
 	buf := &bytes.Buffer{}
-	for _, k := range columnNames {
-		column := tab.Columns[k]
-		field := ModelField{
+	for _, column := range table.OrdinalColumns {
+		field := ModelFieldView{
 			FieldComment: column.ColumnName,
 			FieldType:    column.ClassFieldType,
 			FieldName:    column.ClassFieldName,
@@ -423,7 +439,48 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, tab *SqlTab
 	return nil
 }
 
-func RenderJava(tables map[string]SqlTable, renderConf conf.RenderConfig) (err error) {
+// Render dao
+// mysql:
+//
+//	[1] mybatis
+//	[2] mapper
+func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+	var mybatisView MybatisView = MybatisView{
+		BasePackage:     renderConf.BasePackage,
+		TableName:       table.TableName,
+		TableClassName:  table.TableClassName,
+		TablePrimaryKey: "",
+		Columns:         make([]*MybatisColumnView, 0),
+	}
+	for _, column := range table.OrdinalColumns {
+		columnView := MybatisColumnView{
+			ColumnOrdinal:  column.ColumnOrdinal,
+			IsPrimaryKey:   false,
+			ColumnName:     column.ColumnName,
+			ClassFieldName: column.ClassFieldName,
+		}
+		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
+			columnView.IsPrimaryKey = true
+			mybatisView.TablePrimaryKey = *column.ColumnKey
+		}
+		mybatisView.Columns = append(mybatisView.Columns, &columnView)
+	}
+	// Create a text file to write the output
+	f, err := os.Create(filepath.Join(renderConf.OutputFolder, mybatisView.TableClassName+"Mapper.xml"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// Render mybatis
+	err = t.ExecuteTemplate(f, TEMPLATE_MYBATIS, mybatisView)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err error) {
 	log.Info("[render] [java] start")
 	t, err := initTemplate(renderConf)
 	if err != nil {
@@ -434,19 +491,25 @@ func RenderJava(tables map[string]SqlTable, renderConf conf.RenderConfig) (err e
 		return err
 	}
 	// Loop over the tables
-	for _, tab := range tables {
+	for _, table := range tables {
 		// TODO Exclude pattern filter
 
 		// Init Class Type
-		err = initClassFieldType(renderConf, &tab)
+		err = initClassFieldType(renderConf, table)
 		if err != nil {
-			log.Errorf("[render] table [%v] init class field type with error: %v", tab.TableName, err)
+			log.Errorf("[render] table [%v] init class field type with error: %v", table.TableName, err)
 			continue
 		}
 		// Render Model File
-		err = renderModel(t, renderConf, &tab)
+		err = renderModel(t, renderConf, table)
 		if err != nil {
-			log.Errorf("[render] table [%v] model with error: %v", tab.TableName, err)
+			log.Errorf("[render] table [%v] model with error: %v", table.TableName, err)
+			continue
+		}
+		// Render Dao File
+		err = renderDao(t, renderConf, table)
+		if err != nil {
+			log.Errorf("[render] table [%v] dao with error: %v", table.TableName, err)
 			continue
 		}
 	}

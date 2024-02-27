@@ -59,13 +59,15 @@ type SqlTable struct {
 	TableComment *string
 	// Table Class Name
 	TableClassName string
-	// Table Columns
+	// Table Columns map[name]
 	Columns map[string]*SqlColumn
+	// Table Columns array
+	OrdinalColumns []*SqlColumn
 }
 
 type DataBaseMeta interface {
 	// Fetch tables (contains columns)
-	GetTableMetas(dbConfig conf.DatabaseConfig) (tables map[string]SqlTable, err error)
+	GetTableMetas(dbConfig conf.DatabaseConfig) (tables map[string]*SqlTable, err error)
 }
 
 // Run code gen
