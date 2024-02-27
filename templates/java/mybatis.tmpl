@@ -14,4 +14,39 @@
 {{- end }}
     </resultMap>
 
+    <!-- 用于select查询公用抽取的列 -->
+    <sql id="columns">
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+    </sql>
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKey}}">
+        INSERT INTO `{{.TableClassName}}` 
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} #{item.{{$el.ClassFieldName}}}
+    {{- else -}}
+            {{- "        " -}} #{item.{{$el.ClassFieldName}}}{{",\n"}}
+    {{- end -}}
+{{- end }}
+        )
+        </foreach>
+    </insert>
+
 </mapper>

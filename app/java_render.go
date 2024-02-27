@@ -461,7 +461,7 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 		}
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
 			columnView.IsPrimaryKey = true
-			mybatisView.TablePrimaryKey = *column.ColumnKey
+			mybatisView.TablePrimaryKey = column.ColumnName
 		}
 		mybatisView.Columns = append(mybatisView.Columns, &columnView)
 	}
