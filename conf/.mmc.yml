@@ -19,3 +19,9 @@ java:
   excludeColumns:
     - "TransactionNumber"
     - "InUser"
+  updateStatementIgnoreColumns:
+    - "TransactionNumber"
+    - "InUser"
+    - "InDate"
+    - "Deleted"
+    - "Version"    

@@ -44,6 +44,8 @@ type RenderConfig struct {
 	ExcludeTableRegex string
 	// Exclude Columns
 	ExcludeColumns []string
+	// Update Ignore Columns
+	UpdateStatementIgnoreColumns []string
 }
 
 type AppConfig struct {

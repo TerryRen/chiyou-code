@@ -104,6 +104,8 @@ type MybatisView struct {
 	TablePrimaryKey string
 	// Columns
 	Columns []*MybatisColumnView
+	// Update Ignore
+	UpdateStatementIgnoreColumns []string
 }
 
 type MybatisColumnView struct {
@@ -135,6 +137,31 @@ func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error
 	t, err = template.New("java").Funcs(template.FuncMap{
 		"sub": func(a, b int) int {
 			return a - b
+		},
+		"in": func(value any, collection any) bool {
+			switch collection := collection.(type) {
+			case []string:
+				for _, v := range collection {
+					if v == value {
+						return true
+					}
+				}
+			case []int:
+				for _, v := range collection {
+					if v == value {
+						return true
+					}
+				}
+			case map[string]interface{}:
+				if _, ok := collection[value.(string)]; ok {
+					return true
+				}
+			case map[int]interface{}:
+				if _, ok := collection[value.(int)]; ok {
+					return true
+				}
+			}
+			return false
 		},
 	}).ParseFiles(files...)
 	if err != nil {
@@ -446,11 +473,12 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 //	[2] mapper
 func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
 	var mybatisView MybatisView = MybatisView{
-		BasePackage:     renderConf.BasePackage,
-		TableName:       table.TableName,
-		TableClassName:  table.TableClassName,
-		TablePrimaryKey: "",
-		Columns:         make([]*MybatisColumnView, 0),
+		BasePackage:                  renderConf.BasePackage,
+		TableName:                    table.TableName,
+		TableClassName:               table.TableClassName,
+		TablePrimaryKey:              "",
+		Columns:                      make([]*MybatisColumnView, 0),
+		UpdateStatementIgnoreColumns: renderConf.UpdateStatementIgnoreColumns,
 	}
 	for _, column := range table.OrdinalColumns {
 		columnView := MybatisColumnView{
