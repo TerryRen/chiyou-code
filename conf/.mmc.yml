@@ -21,7 +21,13 @@ java:
     - "InUser"
   updateStatementIgnoreColumns:
     - "TransactionNumber"
+    - "Version"
     - "InUser"
     - "InDate"
     - "Deleted"
-    - "Version"    
+  deleteStatementIgnoreColumns:
+    - "InUser"
+    - "InDate"
+    - "LastEditUser"
+    - "LastEditDate"
+    - "Deleted"

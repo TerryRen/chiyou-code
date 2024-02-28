@@ -14,7 +14,7 @@
 {{- end }}
     </resultMap>
 
-    <!-- 用于select查询公用抽取的列 -->
+    <!-- SELECT common columns -->
     <sql id="columns">
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
@@ -25,8 +25,8 @@
 {{- end }}
     </sql>
 
-    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKey}}">
-        INSERT INTO `{{.TableClassName}}` 
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
+        INSERT INTO `{{.TableClassName}}`
         (
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
@@ -50,8 +50,8 @@
         </foreach>
     </insert>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKey}}">
-        INSERT INTO `{{.TableClassName}}` 
+    <insert id="insert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
+        INSERT INTO `{{.TableClassName}}`
         (
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
@@ -73,5 +73,115 @@
         )
     </insert>
 
+    <sql id="update_sql">
+        <set>
+{{- range $i, $el := .Columns -}}
+{{- if in $el.ColumnName $.UpdateStatementIgnoreColumns -}}
+{{- else }}
+            <if test="{{$el.ClassFieldName}} != null">
+                `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+            </if>
+{{- end -}}
+{{end}}
+            <!-- Version Optimistic Locking -->
+            <if test="version != null">
+                `Version` = `Version` + 1
+            </if>
+        </set>
+    </sql>
+
+    <update id="update">
+        UPDATE `{{.TableClassName}}`
+        <include refid="update_sql"/>
+        WHERE
+{{- range $i, $el := .Columns -}}
+{{- if $el.IsPrimaryKey }}
+        `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }
+{{- end -}}
+{{end}}
+    </update>
+
+    <delete id="delete">
+        UPDATE `{{.TableClassName}}`
+        SET `deleted` = 1, `LastEditUser` = #{lastEditUser}, `LastEditDate` = #{lastEditDate}
+        WHERE
+        <trim prefixOverrides="AND">
+{{- range $i, $el := .Columns -}}
+{{- if in $el.ColumnName $.DeleteStatementIgnoreColumns -}}
+{{- else }}
+            <if test="{{$el.ClassFieldName}} != null">
+                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+            </if>
+{{- end -}}
+{{end}}
+        </trim>
+        AND `deleted` = 0
+    </delete>
+
+    <sql id="findPage_where">
+        <where>
+{{- range $i, $el := .Columns }}
+            <if test="{{$el.ClassFieldName}} != null">
+                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+            </if>
+{{- end}}
+        </where>
+    </sql>
+
+    <select id="getById" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableClassName}}`
+        WHERE
+        <trim prefixOverrides="AND">
+{{- range $i, $el := .Columns -}}
+{{- if $el.IsPrimaryKey }}
+            AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} } 
+{{- end -}}
+{{end}}
+        </trim>
+        AND `deleted` = 0
+    </select>
+
+    <select id="findPageCount" resultType="Integer">
+        SELECT COUNT(*) 
+        FROM `{{.TableClassName}}`
+        <include refid="findPage_where"/>
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findPage" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableClassName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+        LIMIT #{start}, #{limit};
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findOne" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableClassName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+        LIMIT 1;
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findAll" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableClassName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+    </select>
 
 </mapper>

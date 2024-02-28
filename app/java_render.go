@@ -100,12 +100,14 @@ type MybatisView struct {
 	TableName string
 	// Table Class Name
 	TableClassName string
-	// Table Primary Key
-	TablePrimaryKey string
+	// Table Primary Key (Field Name)
+	TablePrimaryKeyFieldName string
 	// Columns
 	Columns []*MybatisColumnView
 	// Update Ignore
 	UpdateStatementIgnoreColumns []string
+	// Delete Ignore
+	DeleteStatementIgnoreColumns []string
 }
 
 type MybatisColumnView struct {
@@ -476,9 +478,10 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 		BasePackage:                  renderConf.BasePackage,
 		TableName:                    table.TableName,
 		TableClassName:               table.TableClassName,
-		TablePrimaryKey:              "",
+		TablePrimaryKeyFieldName:     "",
 		Columns:                      make([]*MybatisColumnView, 0),
 		UpdateStatementIgnoreColumns: renderConf.UpdateStatementIgnoreColumns,
+		DeleteStatementIgnoreColumns: renderConf.DeleteStatementIgnoreColumns,
 	}
 	for _, column := range table.OrdinalColumns {
 		columnView := MybatisColumnView{
@@ -489,7 +492,7 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 		}
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
 			columnView.IsPrimaryKey = true
-			mybatisView.TablePrimaryKey = column.ColumnName
+			mybatisView.TablePrimaryKeyFieldName = column.ClassFieldName
 		}
 		mybatisView.Columns = append(mybatisView.Columns, &columnView)
 	}

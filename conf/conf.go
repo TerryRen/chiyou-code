@@ -46,6 +46,8 @@ type RenderConfig struct {
 	ExcludeColumns []string
 	// Update Ignore Columns
 	UpdateStatementIgnoreColumns []string
+	// Delete Ignore Columns
+	DeleteStatementIgnoreColumns []string
 }
 
 type AppConfig struct {
