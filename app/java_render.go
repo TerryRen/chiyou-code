@@ -34,7 +34,7 @@ const (
 	TEMPLATE_MODEL       = "model.tmpl"
 	TEMPLATE_MODEL_FIELD = "model.field.tmpl"
 	TEMPLATE_MYBATIS     = "mybatis.tmpl"
-	LF                   = "\n"
+	TEMPLATE_MAPPER      = "mapper.tmpl"
 )
 
 var (
@@ -121,6 +121,23 @@ type MybatisColumnView struct {
 	ClassFieldName string
 }
 
+type MapperView struct {
+	// Author
+	Author string
+	// Version
+	Version string
+	// Base Package
+	BasePackage string
+	// Table Comment
+	TableComment string
+	// Table Class Name
+	TableClassName string
+	// Create Time
+	CreateTime string
+	// Table Primary Key (Field Type)
+	TablePrimaryKeyFieldType string
+}
+
 // Init template
 func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error) {
 	var files []string
@@ -164,6 +181,9 @@ func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error
 				}
 			}
 			return false
+		},
+		"firstLower": func(value string) string {
+			return str.FirstLower(value)
 		},
 	}).ParseFiles(files...)
 	if err != nil {
@@ -468,12 +488,8 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 	return nil
 }
 
-// Render dao
-// mysql:
-//
-//	[1] mybatis
-//	[2] mapper
-func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+// Render Mybatis
+func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
 	var mybatisView MybatisView = MybatisView{
 		BasePackage:                  renderConf.BasePackage,
 		TableName:                    table.TableName,
@@ -506,6 +522,64 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 	err = t.ExecuteTemplate(f, TEMPLATE_MYBATIS, mybatisView)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// Render Mapper
+func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+	var mapperView MapperView = MapperView{
+		Author:                   renderConf.Author,
+		Version:                  renderConf.Version,
+		BasePackage:              renderConf.BasePackage,
+		TableComment:             table.TableName,
+		TableClassName:           table.TableClassName,
+		CreateTime:               time.Now().Format("2006-01-02 15:04:05"),
+		TablePrimaryKeyFieldType: "",
+	}
+	if table.TableComment != nil {
+		mapperView.TableComment = *table.TableComment
+	}
+	// PK
+	for _, column := range table.OrdinalColumns {
+		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
+			mapperView.TablePrimaryKeyFieldType = column.ClassFieldType
+		}
+	}
+	// Create a text file to write the output
+	f, err := os.Create(filepath.Join(renderConf.OutputFolder, mapperView.TableClassName+"Mapper.java"))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// Render mybatis
+	err = t.ExecuteTemplate(f, TEMPLATE_MAPPER, mapperView)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Render dao
+// mysql:
+//
+//	[1] mybatis
+//	[2] mapper
+func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+	switch table.DbType {
+	case DB_TYPE_MYSQL:
+		// Render mybatis
+		err = renderMybatis(t, renderConf, table)
+		if err != nil {
+			return err
+		}
+		// Render mapper
+		err = renderMapper(t, renderConf, table)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("db type: %v render dao unSupported", table.DbType)
 	}
 
 	return nil

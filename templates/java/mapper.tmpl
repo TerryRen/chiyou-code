@@ -1,0 +1,40 @@
+package {{.BasePackage}}.mapper;
+
+import {{.BasePackage}}.model.po.{{.TableClassName}};
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+
+import com.newegg.mkpl.radial.annotation.UseDataSource;
+import java.util.List;
+
+/**
+ *
+ * {{.TableComment}}
+ *
+ * @author {{.Author}}
+ * @version {{.Version}}
+ * @date {{.CreateTime}}
+ */
+@Mapper
+@Repository
+public interface {{.TableClassName}}Mapper {
+    /**
+     * insert
+     *
+     * @param entity
+     * @return pk
+     */
+    @UseDataSource("dataSource_TPL-PRIMARY")
+    {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity);
+
+    /**
+     * delete
+     *
+     * @param ${classNameLower} 实体
+     * @return 影响行数
+     */
+    @UseDataSource("dataSource_TPL-PRIMARY")
+    int delete(${table.className} ${classNameLower});
+
+}
