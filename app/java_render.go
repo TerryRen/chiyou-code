@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"chiyou.code/mmc/conf"
+	"chiyou.code/mmc/lib/sos"
 	"chiyou.code/mmc/lib/str"
 	log "github.com/sirupsen/logrus"
 )
@@ -197,16 +197,10 @@ func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error
 
 // Init output folder
 func initOutputFolder(renderConf conf.RenderConfig) (err error) {
-	// Check if the directory exists
-	_, err = os.Stat(renderConf.OutputFolder)
-	if errors.Is(err, os.ErrNotExist) {
-		// Create the directory if it does not exist
-		err = os.MkdirAll(renderConf.OutputFolder, os.ModePerm)
-		if err != nil {
-			return err
-		}
+	if err = sos.CreateFolder(renderConf.OutputFolder); err != nil {
+		return err
 	}
-	return nil
+	return os.RemoveAll(renderConf.OutputFolder)
 }
 
 // Init Class Type (Field Type & Field Name)
@@ -476,7 +470,8 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 		buf.Reset()
 	}
 	// Create a text file to write the output
-	f, err := os.Create(filepath.Join(renderConf.OutputFolder, model.TableClassName+".java"))
+	modelFileName := filepath.Join(renderConf.OutputFolder, renderConf.ModelSubFolder, model.TableClassName+".java")
+	f, err := sos.CreateFile(modelFileName)
 	if err != nil {
 		return err
 	}
@@ -515,7 +510,8 @@ func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *Sq
 		mybatisView.Columns = append(mybatisView.Columns, &columnView)
 	}
 	// Create a text file to write the output
-	f, err := os.Create(filepath.Join(renderConf.OutputFolder, mybatisView.TableClassName+"Mapper.xml"))
+	modelFileName := filepath.Join(renderConf.OutputFolder, renderConf.DaoSubFolder, mybatisView.TableClassName+"Mapper.xml")
+	f, err := sos.CreateFile(modelFileName)
 	if err != nil {
 		return err
 	}
@@ -551,7 +547,8 @@ func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *Sql
 		}
 	}
 	// Create a text file to write the output
-	f, err := os.Create(filepath.Join(renderConf.OutputFolder, mapperView.TableClassName+"Mapper.java"))
+	modelFileName := filepath.Join(renderConf.OutputFolder, "mapper", mapperView.TableClassName+"Mapper.java")
+	f, err := sos.CreateFile(modelFileName)
 	if err != nil {
 		return err
 	}
@@ -602,7 +599,7 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 	// Loop over the tables
 	for _, table := range tables {
 		// TODO Exclude pattern filter
-
+		// TODO 是否继承basemodel处理
 		// Init Class Type
 		err = initClassFieldType(renderConf, table)
 		if err != nil {

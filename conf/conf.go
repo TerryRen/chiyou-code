@@ -30,6 +30,10 @@ type RenderConfig struct {
 	TemplateFolder string
 	// Output folder
 	OutputFolder string
+	// Model Output folder (sub)
+	ModelSubFolder string
+	// Dao Output folder  (sub)
+	DaoSubFolder string
 	// Author
 	Author string
 	// Version
@@ -40,10 +44,10 @@ type RenderConfig struct {
 	IgnorePrefix string
 	// Ignore Suffix
 	IgnoreSuffix string
+	// Include Table Regex
+	IncludeTableRegex string
 	// Exclude Table Regex
 	ExcludeTableRegex string
-	// Exclude Columns
-	ExcludeColumns []string
 	// Update Ignore Columns
 	UpdateStatementIgnoreColumns []string
 	// Delete Ignore Columns
