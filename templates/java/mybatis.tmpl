@@ -110,7 +110,7 @@
 {{- if in $el.ColumnName $.DeleteStatementIgnoreColumns -}}
 {{- else }}
             <if test="{{$el.ClassFieldName}} != null">
-                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }
             </if>
 {{- end -}}
 {{end}}
@@ -121,8 +121,8 @@
     <sql id="findPage_where">
         <where>
 {{- range $i, $el := .Columns }}
-            <if test="{{$el.ClassFieldName}} != null">
-                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+            <if test="condition.{{$el.ClassFieldName}} != null">
+                AND `{{$el.ColumnName}}` = #{condition. {{- $el.ClassFieldName -}} }
             </if>
 {{- end}}
         </where>

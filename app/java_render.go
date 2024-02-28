@@ -136,6 +136,8 @@ type MapperView struct {
 	CreateTime string
 	// Table Primary Key (Field Type)
 	TablePrimaryKeyFieldType string
+	// Table Primary Key (Field Name)
+	TablePrimaryKeyFieldName string
 }
 
 // Init template
@@ -536,6 +538,7 @@ func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *Sql
 		TableClassName:           table.TableClassName,
 		CreateTime:               time.Now().Format("2006-01-02 15:04:05"),
 		TablePrimaryKeyFieldType: "",
+		TablePrimaryKeyFieldName: "",
 	}
 	if table.TableComment != nil {
 		mapperView.TableComment = *table.TableComment
@@ -544,6 +547,7 @@ func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *Sql
 	for _, column := range table.OrdinalColumns {
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
 			mapperView.TablePrimaryKeyFieldType = column.ClassFieldType
+			mapperView.TablePrimaryKeyFieldName = column.ClassFieldName
 		}
 	}
 	// Create a text file to write the output
