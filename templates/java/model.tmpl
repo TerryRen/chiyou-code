@@ -24,9 +24,9 @@ import java.math.BigDecimal;
 @ToString
 @Validated
 @Accessors(chain = true)
+@EqualsAndHashCode(callSuper = true)
 @Schema(description = "{{.TableComment}}")
 @JsonIgnoreProperties(ignoreUnknown = true)
-@EqualsAndHashCode(callSuper = true)
 public class {{.TableClassName}} extends BaseModel {
 {{range $i, $el := .Fields}}
     {{- if eq $i (sub (len $.Fields) 1) -}}
