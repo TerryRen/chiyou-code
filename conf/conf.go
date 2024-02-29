@@ -16,12 +16,62 @@ type LogConfig struct {
 	LogFileMaxAgeHours   int
 }
 
-type JavaConfig struct {
+type DatabaseConfig struct {
+	// mysql,sqlserver
+	DriverName string
+	// {user}:{password}@tcp({ip}:{port})/{db}
+	DataSourceName string
+	// {db}
+	DataBase string
+}
+
+type RenderConfig struct {
+	// Template folder
+	TemplateFolder string
+	// Template base class folder
+	TemplateBaseClassFolder string
+	// Template map
+	TemplateMap map[string]string
+	// Output folder
+	OutputFolder string
+	// Model Output folder (sub)
+	ModelSubFolder string
+	// Dao Output folder  (sub)
+	DaoSubFolder string
+	// Service Output folder (sub)
+	ServiceSubFolder string
+	// Author
+	Author string
+	// Version
+	Version string
+	// Base Package
+	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
+	// Dao Sub Package
+	DaoSubPackage string
+	// Service Sub Package
+	ServiceSubPackage string
+	// Ignore Prefix
+	IgnorePrefix string
+	// Ignore Suffix
+	IgnoreSuffix string
+	// Include Table Regex
+	IncludeTableRegexs []string
+	// Exclude Table Regex
+	ExcludeTableRegexs []string
+	// Base Model (class) Ignore Columns
+	BaseModeltIgnoreColumns []string
+	// Update Ignore Columns
+	UpdateStatementIgnoreColumns []string
+	// Delete Ignore Columns
+	DeleteStatementIgnoreColumns []string
 }
 
 type AppConfig struct {
 	Log  LogConfig
-	Java JavaConfig
+	Db   DatabaseConfig
+	Java RenderConfig
 }
 
 // config is a package-level variable that stores the configuration object
