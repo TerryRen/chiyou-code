@@ -26,7 +26,7 @@
     </sql>
 
     <insert id="batchInsert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
-        INSERT INTO `{{.TableClassName}}`
+        INSERT INTO `{{.TableName}}`
         (
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
@@ -51,7 +51,7 @@
     </insert>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
-        INSERT INTO `{{.TableClassName}}`
+        INSERT INTO `{{.TableName}}`
         (
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
@@ -91,7 +91,7 @@
     </sql>
 
     <update id="update">
-        UPDATE `{{.TableClassName}}`
+        UPDATE `{{.TableName}}`
         <include refid="update_sql"/>
         WHERE
 {{- range $i, $el := .Columns -}}
@@ -102,7 +102,7 @@
     </update>
 
     <delete id="delete">
-        UPDATE `{{.TableClassName}}`
+        UPDATE `{{.TableName}}`
         SET `deleted` = 1, `LastEditUser` = #{lastEditUser}, `LastEditDate` = #{lastEditDate}
         WHERE
         <trim prefixOverrides="AND">
@@ -131,7 +131,7 @@
     <select id="getById" resultMap="RM_{{.TableClassName}}">
         SELECT
         <include refid="columns"/>
-        FROM `{{.TableClassName}}`
+        FROM `{{.TableName}}`
         WHERE
         <trim prefixOverrides="AND">
 {{- range $i, $el := .Columns -}}
@@ -145,7 +145,7 @@
 
     <select id="findPageCount" resultType="Integer">
         SELECT COUNT(*) 
-        FROM `{{.TableClassName}}`
+        FROM `{{.TableName}}`
         <include refid="findPage_where"/>
     </select>
 
@@ -153,7 +153,7 @@
     <select id="findPage" resultMap="RM_{{.TableClassName}}">
         SELECT
         <include refid="columns"/>
-        FROM `{{.TableClassName}}`
+        FROM `{{.TableName}}`
         <include refid="findPage_where"/>
         <if test="condition.sortColumns != null">
             ORDER BY ${condition.sortColumns}
@@ -165,7 +165,7 @@
     <select id="findOne" resultMap="RM_{{.TableClassName}}">
         SELECT
         <include refid="columns"/>
-        FROM `{{.TableClassName}}`
+        FROM `{{.TableName}}`
         <include refid="findPage_where"/>
         <if test="condition.sortColumns != null">
             ORDER BY ${condition.sortColumns}
@@ -177,7 +177,7 @@
     <select id="findAll" resultMap="RM_{{.TableClassName}}">
         SELECT
         <include refid="columns"/>
-        FROM `{{.TableClassName}}`
+        FROM `{{.TableName}}`
         <include refid="findPage_where"/>
         <if test="condition.sortColumns != null">
             ORDER BY ${condition.sortColumns}
