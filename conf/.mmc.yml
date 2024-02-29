@@ -10,16 +10,29 @@ db:
   dataBase: "{db}"
 java:
   templateFolder: "./templates/java"
+  templateMap:
+    model: "model.tmpl"
+    model_field: "model.field.tmpl"
+    mybatis: "mybatis.tmpl"
+    mapper: "mapper.tmpl"  
   outputFolder: "./output/java"
-  modelSubFolder: "model"
+  modelSubFolder: "model/po"
   daoSubFolder: "mapper"
   author: "mmc"
   version: "Version 1.0"
   basePackage: "{base-package}"
   ignorePrefix: "test_"
   ignoreSuffix: "_test"
-  includeTableRegex: ""
-  excludeTableRegex: ""
+  includeTableRegexs:
+    - "^sys.*$"
+  excludeTableRegexs:
+    - "^tmp.*$"
+  baseModeltIgnoreColumns:
+    - "TransactionNumber"
+    - "Version"
+    - "InUser"
+    - "InDate"
+    - "Deleted"
   updateStatementIgnoreColumns:
     - "TransactionNumber"
     - "Version"

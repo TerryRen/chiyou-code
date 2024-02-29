@@ -28,6 +28,8 @@ type DatabaseConfig struct {
 type RenderConfig struct {
 	// Template folder
 	TemplateFolder string
+	// Template map
+	TemplateMap map[string]string
 	// Output folder
 	OutputFolder string
 	// Model Output folder (sub)
@@ -40,14 +42,20 @@ type RenderConfig struct {
 	Version string
 	// Base Package
 	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
+	// Dao Sub Package
+	DaoSubPackage string
 	// Ignore Prefix
 	IgnorePrefix string
 	// Ignore Suffix
 	IgnoreSuffix string
 	// Include Table Regex
-	IncludeTableRegex string
+	IncludeTableRegexs []string
 	// Exclude Table Regex
-	ExcludeTableRegex string
+	ExcludeTableRegexs []string
+	// Base Model (class) Ignore Columns
+	BaseModeltIgnoreColumns []string
 	// Update Ignore Columns
 	UpdateStatementIgnoreColumns []string
 	// Delete Ignore Columns

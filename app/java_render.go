@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -31,10 +32,10 @@ const (
 	JAVA_TYPE_TIMESTAMP  = "Timestamp"
 	JAVA_TYPE_DATE_TIME  = "LocalDateTime"
 	// Template
-	TEMPLATE_MODEL       = "model.tmpl"
-	TEMPLATE_MODEL_FIELD = "model.field.tmpl"
-	TEMPLATE_MYBATIS     = "mybatis.tmpl"
-	TEMPLATE_MAPPER      = "mapper.tmpl"
+	TEMPLATE_MODEL       = "model"
+	TEMPLATE_MODEL_FIELD = "model_field"
+	TEMPLATE_MYBATIS     = "mybatis"
+	TEMPLATE_MAPPER      = "mapper"
 )
 
 var (
@@ -74,6 +75,8 @@ type ModelView struct {
 	Version string
 	// Base Package
 	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
 	// Table Comment
 	TableComment string
 	// Table Class Name
@@ -96,6 +99,10 @@ type ModelFieldView struct {
 type MybatisView struct {
 	// Base Package
 	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
+	// Dao Sub Package
+	DaoSubPackage string
 	// Table Name
 	TableName string
 	// Table Class Name
@@ -128,6 +135,10 @@ type MapperView struct {
 	Version string
 	// Base Package
 	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
+	// Dao Sub Package
+	DaoSubPackage string
 	// Table Comment
 	TableComment string
 	// Table Class Name
@@ -336,10 +347,10 @@ func buildLongFieldAnnotation(column *SqlColumn) (annotations []string) {
 // BigDecimal Annotation
 func buildBigDecimalFieldAnnotation(column *SqlColumn) (annotations []string) {
 	annotations = make([]string, 4)
-	min := fmt.Sprintf("%v.%v", "0", str.RepeatString(*column.NumberPrecision, "0"))
+	min := fmt.Sprintf("%v.%v", "0", str.RepeatString(*column.NumberScale, "0"))
 	max := fmt.Sprintf("%v.%v",
 		str.RepeatString((*column.NumberPrecision)-(*column.NumberScale), "9"),
-		str.RepeatString(*column.NumberPrecision, "9"))
+		str.RepeatString(*column.NumberScale, "9"))
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
@@ -437,13 +448,14 @@ func buildFieldAnnotations(column *SqlColumn) (annotations []string) {
 // Render model object
 func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
 	var model ModelView = ModelView{
-		Author:         renderConf.Author,
-		Version:        renderConf.Version,
-		BasePackage:    renderConf.BasePackage,
-		TableComment:   table.TableName,
-		TableClassName: table.TableClassName,
-		CreateTime:     time.Now().Format("2006-01-02 15:04:05"),
-		Fields:         make([]string, 0),
+		Author:          renderConf.Author,
+		Version:         renderConf.Version,
+		BasePackage:     renderConf.BasePackage,
+		ModelSubPackage: renderConf.ModelSubPackage,
+		TableComment:    table.TableName,
+		TableClassName:  table.TableClassName,
+		CreateTime:      time.Now().Format("2006-01-02 15:04:05"),
+		Fields:          make([]string, 0),
 	}
 	if table.TableComment != nil {
 		model.TableComment = *table.TableComment
@@ -451,6 +463,19 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 	// Iterate over the sorted tab
 	buf := &bytes.Buffer{}
 	for _, column := range table.OrdinalColumns {
+		// Ignore Base Model Column
+		if len(renderConf.BaseModeltIgnoreColumns) > 0 {
+			skip := false
+			for _, ignoreColumn := range renderConf.BaseModeltIgnoreColumns {
+				if strings.EqualFold(column.ColumnName, ignoreColumn) {
+					skip = true
+					break
+				}
+			}
+			if skip {
+				continue
+			}
+		}
 		field := ModelFieldView{
 			FieldComment: column.ColumnName,
 			FieldType:    column.ClassFieldType,
@@ -461,8 +486,8 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 		}
 		// Build annotation
 		field.FieldAnnotations = buildFieldAnnotations(column)
-		// Render java model.field
-		err = t.ExecuteTemplate(buf, TEMPLATE_MODEL_FIELD, field)
+		// Render java model.field.tmpl
+		err = t.ExecuteTemplate(buf, renderConf.TemplateMap[TEMPLATE_MODEL_FIELD], field)
 		if err != nil {
 			return err
 		}
@@ -476,8 +501,8 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 		return err
 	}
 	defer f.Close()
-	// Render java model
-	err = t.ExecuteTemplate(f, TEMPLATE_MODEL, model)
+	// Render java model.tmpl
+	err = t.ExecuteTemplate(f, renderConf.TemplateMap[TEMPLATE_MODEL], model)
 	if err != nil {
 		return err
 	}
@@ -489,6 +514,8 @@ func renderModel(t *template.Template, renderConf conf.RenderConfig, table *SqlT
 func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
 	var mybatisView MybatisView = MybatisView{
 		BasePackage:                  renderConf.BasePackage,
+		ModelSubPackage:              renderConf.ModelSubPackage,
+		DaoSubPackage:                renderConf.DaoSubPackage,
 		TableName:                    table.TableName,
 		TableClassName:               table.TableClassName,
 		TablePrimaryKeyFieldName:     "",
@@ -516,8 +543,8 @@ func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *Sq
 		return err
 	}
 	defer f.Close()
-	// Render mybatis
-	err = t.ExecuteTemplate(f, TEMPLATE_MYBATIS, mybatisView)
+	// Render mybatis.tmpl
+	err = t.ExecuteTemplate(f, renderConf.TemplateMap[TEMPLATE_MYBATIS], mybatisView)
 	if err != nil {
 		return err
 	}
@@ -530,6 +557,8 @@ func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *Sql
 		Author:                   renderConf.Author,
 		Version:                  renderConf.Version,
 		BasePackage:              renderConf.BasePackage,
+		ModelSubPackage:          renderConf.ModelSubPackage,
+		DaoSubPackage:            renderConf.DaoSubPackage,
 		TableComment:             table.TableName,
 		TableClassName:           table.TableClassName,
 		CreateTime:               time.Now().Format("2006-01-02 15:04:05"),
@@ -547,14 +576,14 @@ func renderMapper(t *template.Template, renderConf conf.RenderConfig, table *Sql
 		}
 	}
 	// Create a text file to write the output
-	modelFileName := filepath.Join(renderConf.OutputFolder, "mapper", mapperView.TableClassName+"Mapper.java")
+	modelFileName := filepath.Join(renderConf.OutputFolder, renderConf.DaoSubFolder, mapperView.TableClassName+"Mapper.java")
 	f, err := sos.CreateFile(modelFileName)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	// Render mybatis
-	err = t.ExecuteTemplate(f, TEMPLATE_MAPPER, mapperView)
+	// Render mapper.tmpl
+	err = t.ExecuteTemplate(f, renderConf.TemplateMap[TEMPLATE_MAPPER], mapperView)
 	if err != nil {
 		return err
 	}
@@ -586,20 +615,73 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 	return nil
 }
 
+func regexCompile(regexs []string) (regexCls []*regexp.Regexp, err error) {
+	regexCls = make([]*regexp.Regexp, 0, len(regexs))
+	if len(regexs) > 0 {
+		for _, reg := range regexs {
+			if regcomplie, err := regexp.Compile(reg); err != nil {
+				return nil, err
+			} else {
+				regexCls = append(regexCls, regcomplie)
+			}
+		}
+	}
+	return regexCls, nil
+}
+
+func regexMatchString(regexCls []*regexp.Regexp, value string) bool {
+	for _, reg := range regexCls {
+		if reg.MatchString(value) {
+			return true
+		}
+	}
+	return false
+}
+
+func regexNonMatchString(regexCls []*regexp.Regexp, value string) bool {
+	return !regexMatchString(regexCls, value)
+}
+
 func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err error) {
 	log.Info("[render] [java] start")
+	// Init template
 	t, err := initTemplate(renderConf)
 	if err != nil {
 		return err
 	}
+	// Init output folder
 	err = initOutputFolder(renderConf)
+	if err != nil {
+		return err
+	}
+	// ExcludeTableRegexs complie
+	ExcludeTableRegexs, err := regexCompile(renderConf.ExcludeTableRegexs)
+	if err != nil {
+		return err
+	}
+	// IncludeTableRegexs complie
+	IncludeTableRegexs, err := regexCompile(renderConf.IncludeTableRegexs)
 	if err != nil {
 		return err
 	}
 	// Loop over the tables
 	for _, table := range tables {
-		// TODO Exclude pattern filter
-		// TODO 是否继承basemodel处理
+		// Exclude pattern filter
+		if len(ExcludeTableRegexs) > 0 {
+			skip := regexMatchString(ExcludeTableRegexs, table.TableName)
+			if skip {
+				log.Infof("[render] table [%v] match the exclude regex pattern", table.TableName)
+				continue
+			}
+		}
+		// Include pattern filter
+		if len(IncludeTableRegexs) > 0 {
+			skip := regexNonMatchString(IncludeTableRegexs, table.TableName)
+			if skip {
+				log.Infof("[render] table [%v] non-match the include regex pattern", table.TableName)
+				continue
+			}
+		}
 		// Init Class Type
 		err = initClassFieldType(renderConf, table)
 		if err != nil {
