@@ -28,6 +28,8 @@ type DatabaseConfig struct {
 type RenderConfig struct {
 	// Template folder
 	TemplateFolder string
+	// Template base class folder
+	TemplateBaseClassFolder string
 	// Template map
 	TemplateMap map[string]string
 	// Output folder

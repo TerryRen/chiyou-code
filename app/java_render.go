@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	"chiyou.code/mmc/conf"
+	"chiyou.code/mmc/lib/regex"
 	"chiyou.code/mmc/lib/sos"
 	"chiyou.code/mmc/lib/str"
 	log "github.com/sirupsen/logrus"
@@ -158,8 +158,11 @@ func initTemplate(renderConf conf.RenderConfig) (t *template.Template, err error
 		if err != nil {
 			return err
 		}
+		// is file and with .tmpl suffix
 		if !info.IsDir() {
-			files = append(files, path)
+			if strings.HasSuffix(info.Name(), ".tmpl") {
+				files = append(files, path)
+			}
 		}
 		return nil
 	}); err != nil {
@@ -615,33 +618,6 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 	return nil
 }
 
-func regexCompile(regexs []string) (regexCls []*regexp.Regexp, err error) {
-	regexCls = make([]*regexp.Regexp, 0, len(regexs))
-	if len(regexs) > 0 {
-		for _, reg := range regexs {
-			if regcomplie, err := regexp.Compile(reg); err != nil {
-				return nil, err
-			} else {
-				regexCls = append(regexCls, regcomplie)
-			}
-		}
-	}
-	return regexCls, nil
-}
-
-func regexMatchString(regexCls []*regexp.Regexp, value string) bool {
-	for _, reg := range regexCls {
-		if reg.MatchString(value) {
-			return true
-		}
-	}
-	return false
-}
-
-func regexNonMatchString(regexCls []*regexp.Regexp, value string) bool {
-	return !regexMatchString(regexCls, value)
-}
-
 func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err error) {
 	log.Info("[render] [java] start")
 	// Init template
@@ -650,17 +626,22 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 		return err
 	}
 	// Init output folder
-	err = initOutputFolder(renderConf)
-	if err != nil {
+	if err = initOutputFolder(renderConf); err != nil {
+		return err
+	}
+	// Copy Base Class
+	if err = sos.CopyFolder(
+		filepath.Join(renderConf.TemplateFolder, renderConf.TemplateBaseClassFolder),
+		filepath.Join(renderConf.OutputFolder, renderConf.TemplateBaseClassFolder)); err != nil {
 		return err
 	}
 	// ExcludeTableRegexs complie
-	ExcludeTableRegexs, err := regexCompile(renderConf.ExcludeTableRegexs)
+	ExcludeTableRegexs, err := regex.RegexCompile(renderConf.ExcludeTableRegexs)
 	if err != nil {
 		return err
 	}
 	// IncludeTableRegexs complie
-	IncludeTableRegexs, err := regexCompile(renderConf.IncludeTableRegexs)
+	IncludeTableRegexs, err := regex.RegexCompile(renderConf.IncludeTableRegexs)
 	if err != nil {
 		return err
 	}
@@ -668,7 +649,7 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 	for _, table := range tables {
 		// Exclude pattern filter
 		if len(ExcludeTableRegexs) > 0 {
-			skip := regexMatchString(ExcludeTableRegexs, table.TableName)
+			skip := regex.RegexMatchString(ExcludeTableRegexs, table.TableName)
 			if skip {
 				log.Infof("[render] table [%v] match the exclude regex pattern", table.TableName)
 				continue
@@ -676,7 +657,7 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 		}
 		// Include pattern filter
 		if len(IncludeTableRegexs) > 0 {
-			skip := regexNonMatchString(IncludeTableRegexs, table.TableName)
+			skip := regex.RegexNonMatchString(IncludeTableRegexs, table.TableName)
 			if skip {
 				log.Infof("[render] table [%v] non-match the include regex pattern", table.TableName)
 				continue

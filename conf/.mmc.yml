@@ -10,6 +10,7 @@ db:
   dataBase: "{db}"
 java:
   templateFolder: "./templates/java"
+  templateBaseClassFolder: "common"
   templateMap:
     model: "model.tmpl"
     model_field: "model.field.tmpl"
