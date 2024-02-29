@@ -1,0 +1,125 @@
+package {{.BasePackage}}.{{.ServiceSubPackage}}.impl;
+
+import {{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}};
+import {{.BasePackage}}.{{.DaoSubPackage}}.{{.TableClassName}}Mapper;
+import {{.BasePackage}}.{{.ServiceSubPackage}}.{{.TableClassName}}Service;
+import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
+/**
+ *
+ * {{.TableComment}}
+ *
+ * @author {{.Author}}
+ * @version {{.Version}}
+ * @date {{.CreateTime}}
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Service {
+    private final {{.TableClassName}}Mapper {{ firstLower .TableClassName}}Mapper;
+
+    /**
+     * insert
+     *
+     * @param entity
+     * @return pk
+     */
+    @Override
+    public {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity) {
+        return {{ firstLower .TableClassName}}Mapper.insert(entity);
+    }
+
+    /**
+     * batch insert
+     *
+     * @param list
+     * @return row count
+     */
+    @Override
+    public int batchInsert(List<{{.TableClassName}}> list) {
+        return {{ firstLower .TableClassName}}Mapper.batchInsert(list);
+    }
+
+    /**
+     * delete
+     *
+     * @param entity
+     * @return row count
+     */
+    @Override
+    public int delete({{.TableClassName}} entity) {
+        return {{ firstLower .TableClassName}}Mapper.delete(entity);
+    }
+
+    /**
+     * modify
+     *
+     * @param entity
+     * @return row count
+     */
+    @Override
+    public int update({{.TableClassName}} entity) {
+        return {{ firstLower .TableClassName}}Mapper.update(entity);
+    }
+
+    /**
+     * query by primary key
+     *
+     * @param {{.TablePrimaryKeyFieldName}}
+     * @return entity
+     */
+    @Override
+    public {{.TableClassName}} getById({{.TablePrimaryKeyFieldType}} {{.TablePrimaryKeyFieldName}}) {
+        return {{ firstLower .TableClassName}}Mapper.getById({{.TablePrimaryKeyFieldName}});
+    }
+
+    /**
+     * query by condition (one)
+     *
+     * @param condition
+     * @return entity
+     */
+    @Override
+    public {{.TableClassName}} findOne(@Param("condition") {{.TableClassName}} condition) {
+        return {{ firstLower .TableClassName}}Mapper.findOne(condition);
+    }
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition
+     * @return page count
+     */
+    @Override
+    public int findPageCount(@Param("condition") {{.TableClassName}} condition) {
+        return {{ firstLower .TableClassName}}Mapper.findPageCount(condition);
+    }
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition
+     * @param start
+     * @param limit
+     * @return result set
+     */
+    @Override
+    public List<{{.TableClassName}}> findPage(@Param("condition") {{.TableClassName}} condition, @Param("start") int start, @Param("limit") int limit) {
+        return {{ firstLower .TableClassName}}Mapper.findPage(condition, start, limit);
+    }
+
+    /**
+     * query by condition (all)
+     *
+     * @param condition
+     * @return result set
+     */
+    @Override
+    public List<{{.TableClassName}}> findAll(@Param("condition") {{.TableClassName}} condition) {
+        return {{ firstLower .TableClassName}}Mapper.findAll(condition);
+    }
+}

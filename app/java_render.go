@@ -32,10 +32,12 @@ const (
 	JAVA_TYPE_TIMESTAMP  = "Timestamp"
 	JAVA_TYPE_DATE_TIME  = "LocalDateTime"
 	// Template
-	TEMPLATE_MODEL       = "model"
-	TEMPLATE_MODEL_FIELD = "model_field"
-	TEMPLATE_MYBATIS     = "mybatis"
-	TEMPLATE_MAPPER      = "mapper"
+	TEMPLATE_MODEL        = "model"
+	TEMPLATE_MODEL_FIELD  = "model_field"
+	TEMPLATE_MYBATIS      = "mybatis"
+	TEMPLATE_MAPPER       = "mapper"
+	TEMPLATE_SERVICE      = "service"
+	TEMPLATE_SERVICE_IMPL = "service_impl"
 )
 
 var (
@@ -139,6 +141,31 @@ type MapperView struct {
 	ModelSubPackage string
 	// Dao Sub Package
 	DaoSubPackage string
+	// Table Comment
+	TableComment string
+	// Table Class Name
+	TableClassName string
+	// Create Time
+	CreateTime string
+	// Table Primary Key (Field Type)
+	TablePrimaryKeyFieldType string
+	// Table Primary Key (Field Name)
+	TablePrimaryKeyFieldName string
+}
+
+type ServiceView struct {
+	// Author
+	Author string
+	// Version
+	Version string
+	// Base Package
+	BasePackage string
+	// Model Sub Package
+	ModelSubPackage string
+	// Dao Sub Package
+	DaoSubPackage string
+	// Service Sub Package
+	ServiceSubPackage string
 	// Table Comment
 	TableComment string
 	// Table Class Name
@@ -618,6 +645,60 @@ func renderDao(t *template.Template, renderConf conf.RenderConfig, table *SqlTab
 	return nil
 }
 
+// Render Service
+func renderService(t *template.Template, renderConf conf.RenderConfig, table *SqlTable) (err error) {
+	var serviceView ServiceView = ServiceView{
+		Author:                   renderConf.Author,
+		Version:                  renderConf.Version,
+		BasePackage:              renderConf.BasePackage,
+		ModelSubPackage:          renderConf.ModelSubPackage,
+		DaoSubPackage:            renderConf.DaoSubPackage,
+		ServiceSubPackage:        renderConf.ServiceSubPackage,
+		TableComment:             table.TableName,
+		TableClassName:           table.TableClassName,
+		CreateTime:               time.Now().Format("2006-01-02 15:04:05"),
+		TablePrimaryKeyFieldType: "",
+		TablePrimaryKeyFieldName: "",
+	}
+	if table.TableComment != nil {
+		serviceView.TableComment = *table.TableComment
+	}
+	// PK
+	for _, column := range table.OrdinalColumns {
+		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
+			serviceView.TablePrimaryKeyFieldType = column.ClassFieldType
+			serviceView.TablePrimaryKeyFieldName = column.ClassFieldName
+		}
+	}
+	// Create a text file to write the output
+	serviceFileName := filepath.Join(renderConf.OutputFolder, renderConf.ServiceSubFolder, serviceView.TableClassName+"Service.java")
+	f, err := sos.CreateFile(serviceFileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// Render service.tmpl
+	err = t.ExecuteTemplate(f, renderConf.TemplateMap[TEMPLATE_SERVICE], serviceView)
+	if err != nil {
+		return err
+	}
+
+	// Create a text file to write the output
+	serviceImplFileName := filepath.Join(renderConf.OutputFolder, renderConf.ServiceSubFolder, "impl", serviceView.TableClassName+"ServiceImpl.java")
+	f, err = sos.CreateFile(serviceImplFileName)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	// Render service.impl.tmpl
+	err = t.ExecuteTemplate(f, renderConf.TemplateMap[TEMPLATE_SERVICE_IMPL], serviceView)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err error) {
 	log.Info("[render] [java] start")
 	// Init template
@@ -679,6 +760,12 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 		err = renderDao(t, renderConf, table)
 		if err != nil {
 			log.Errorf("[render] table [%v] dao with error: %v", table.TableName, err)
+			continue
+		}
+		// Render Service File
+		err = renderService(t, renderConf, table)
+		if err != nil {
+			log.Errorf("[render] table [%v] service with error: %v", table.TableName, err)
 			continue
 		}
 	}

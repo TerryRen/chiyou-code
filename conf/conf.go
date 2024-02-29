@@ -38,6 +38,8 @@ type RenderConfig struct {
 	ModelSubFolder string
 	// Dao Output folder  (sub)
 	DaoSubFolder string
+	// Service Output folder (sub)
+	ServiceSubFolder string
 	// Author
 	Author string
 	// Version
@@ -48,6 +50,8 @@ type RenderConfig struct {
 	ModelSubPackage string
 	// Dao Sub Package
 	DaoSubPackage string
+	// Service Sub Package
+	ServiceSubPackage string
 	// Ignore Prefix
 	IgnorePrefix string
 	// Ignore Suffix
