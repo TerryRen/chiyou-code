@@ -44,4 +44,4 @@ CREATE TABLE `sys_platform` (
 
 #### 使用说明
 
-1.  `mmc java`
+1.  `mmc java` or `mmc_amd64.exe java --config .mmc.newegg.yml`

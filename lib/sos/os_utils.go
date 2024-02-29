@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/sirupsen/logrus"
 )
 
 // Create file and create directory if not exists
@@ -57,7 +55,6 @@ func CopyFolder(src, dst string) (err error) {
 		if err != nil {
 			return err
 		}
-		logrus.Info(path)
 		outpath := filepath.Join(dst, strings.TrimPrefix(path, src))
 		if info.IsDir() {
 			return CreateFolderWithModel(outpath, info.Mode())
