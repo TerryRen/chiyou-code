@@ -306,7 +306,7 @@ func buildDefaultSchemaAnnotation(column *SqlColumn) (annotation string) {
 
 // String Annotation
 func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
-	annotations = make([]string, 2)
+	annotations = make([]string, 0, 3)
 	// @Schema
 	description := column.ColumnName
 	if column.ColumnComment != nil {
@@ -320,14 +320,19 @@ func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
 		buildAnnotationProperty("description", description, true),
 		buildAnnotationProperty("example", example, true),
 	}
-	annotations[0] = buildAnnotation("@Schema", ps1)
+	annotations = append(annotations, buildAnnotation("@Schema", ps1))
 
 	// @Size
 	ps2 := []string{
 		buildAnnotationProperty("min", "0", false),
 		buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
 	}
-	annotations[1] = buildAnnotation("@Size", ps2)
+	annotations = append(annotations, buildAnnotation("@Size", ps2))
+
+	// @NotBlank
+	if !column.Nullable {
+		annotations = append(annotations, buildAnnotation("@NotBlank", nil))
+	}
 
 	return
 }

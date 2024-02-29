@@ -1,9 +1,9 @@
 package {{.BasePackage}}.{{.ModelSubPackage}};
 
 import {{.BasePackage}}.common.model.BaseModel;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import org.springframework.validation.annotation.Validated;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -21,10 +21,12 @@ import java.math.BigDecimal;
  * @date {{.CreateTime}}
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @ToString
+@Validated
 @Accessors(chain = true)
-@JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
+@Schema(description = "{{.TableComment}}")
+@JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(callSuper = true)
 public class {{.TableClassName}} extends BaseModel {
 {{range $i, $el := .Fields}}
     {{- if eq $i (sub (len $.Fields) 1) -}}
