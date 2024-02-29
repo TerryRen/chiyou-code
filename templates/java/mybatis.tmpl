@@ -2,9 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="{{.BasePackage}}.mapper.{{.TableClassName}}Mapper">
+<mapper namespace="{{.BasePackage}}.{{.DaoSubPackage}}.{{.TableClassName}}Mapper">
 
-    <resultMap id="RM_{{.TableClassName}}" type="{{.BasePackage}}.model.po.{{.TableClassName}}">
+    <resultMap id="RM_{{.TableClassName}}" type="{{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}}">
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
             {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>

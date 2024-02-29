@@ -1,6 +1,6 @@
-package {{.BasePackage}}.mapper;
+package {{.BasePackage}}.{{.DaoSubPackage}};
 
-import {{.BasePackage}}.model.po.{{.TableClassName}};
+import {{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}};
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
