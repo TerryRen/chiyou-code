@@ -21,7 +21,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * insert
      *
-     * @param entity
+     * @param entity entity
      * @return pk
      */
     {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity);
@@ -29,7 +29,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * batch insert
      *
-     * @param list
+     * @param list list
      * @return row count
      */
     int batchInsert(List<{{.TableClassName}}> list);
@@ -37,7 +37,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * delete
      *
-     * @param entity
+     * @param entity entity
      * @return row count
      */
     int delete({{.TableClassName}} entity);
@@ -45,7 +45,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * modify
      *
-     * @param entity
+     * @param entity entity
      * @return row count
      */
     int update({{.TableClassName}} entity);
@@ -53,7 +53,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * query by primary key
      *
-     * @param {{.TablePrimaryKeyFieldName}}
+     * @param {{.TablePrimaryKeyFieldName}} pk
      * @return entity
      */
     {{.TableClassName}} getById({{.TablePrimaryKeyFieldType}} {{.TablePrimaryKeyFieldName}});
@@ -61,7 +61,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * query by condition (one)
      *
-     * @param condition
+     * @param condition condition
      * @return entity
      */
     {{.TableClassName}} findOne(@Param("condition") {{.TableClassName}} condition);
@@ -69,7 +69,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * query by condition (paging)
      *
-     * @param condition
+     * @param condition condition
      * @return page count
      */
     int findPageCount(@Param("condition") {{.TableClassName}} condition);
@@ -77,9 +77,9 @@ public interface {{.TableClassName}}Mapper {
     /**
      * query by condition (paging)
      *
-     * @param condition
-     * @param start
-     * @param limit
+     * @param condition condition
+     * @param start start
+     * @param limit limit
      * @return result set
      */
     List<{{.TableClassName}}> findPage(@Param("condition") {{.TableClassName}} condition, @Param("start") int start, @Param("limit") int limit);
@@ -87,7 +87,7 @@ public interface {{.TableClassName}}Mapper {
     /**
      * query by condition (all)
      *
-     * @param condition
+     * @param condition condition
      * @return result set
      */
     List<{{.TableClassName}}> findAll(@Param("condition") {{.TableClassName}} condition);

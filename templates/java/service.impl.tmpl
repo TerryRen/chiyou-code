@@ -25,7 +25,7 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * insert
      *
-     * @param entity
+     * @param entity entity
      * @return pk
      */
     @Override
@@ -36,7 +36,7 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * batch insert
      *
-     * @param list
+     * @param list list
      * @return row count
      */
     @Override
@@ -47,7 +47,7 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * delete
      *
-     * @param entity
+     * @param entity entity
      * @return row count
      */
     @Override
@@ -58,7 +58,7 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * modify
      *
-     * @param entity
+     * @param entity entity
      * @return row count
      */
     @Override
@@ -69,7 +69,7 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * query by primary key
      *
-     * @param {{.TablePrimaryKeyFieldName}}
+     * @param {{.TablePrimaryKeyFieldName}} pk
      * @return entity
      */
     @Override
@@ -80,46 +80,46 @@ public class {{.TableClassName}}ServiceImpl implements {{.TableClassName}}Servic
     /**
      * query by condition (one)
      *
-     * @param condition
+     * @param condition condition
      * @return entity
      */
     @Override
-    public {{.TableClassName}} findOne(@Param("condition") {{.TableClassName}} condition) {
+    public {{.TableClassName}} findOne({{.TableClassName}} condition) {
         return {{ firstLower .TableClassName}}Mapper.findOne(condition);
     }
 
     /**
      * query by condition (paging)
      *
-     * @param condition
+     * @param condition condition
      * @return page count
      */
     @Override
-    public int findPageCount(@Param("condition") {{.TableClassName}} condition) {
+    public int findPageCount({{.TableClassName}} condition) {
         return {{ firstLower .TableClassName}}Mapper.findPageCount(condition);
     }
 
     /**
      * query by condition (paging)
      *
-     * @param condition
-     * @param start
-     * @param limit
+     * @param condition condition
+     * @param start start
+     * @param limit limit
      * @return result set
      */
     @Override
-    public List<{{.TableClassName}}> findPage(@Param("condition") {{.TableClassName}} condition, @Param("start") int start, @Param("limit") int limit) {
+    public List<{{.TableClassName}}> findPage({{.TableClassName}} condition, int start, int limit) {
         return {{ firstLower .TableClassName}}Mapper.findPage(condition, start, limit);
     }
 
     /**
      * query by condition (all)
      *
-     * @param condition
+     * @param condition condition
      * @return result set
      */
     @Override
-    public List<{{.TableClassName}}> findAll(@Param("condition") {{.TableClassName}} condition) {
+    public List<{{.TableClassName}}> findAll({{.TableClassName}} condition) {
         return {{ firstLower .TableClassName}}Mapper.findAll(condition);
     }
 }

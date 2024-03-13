@@ -15,7 +15,7 @@ public interface {{.TableClassName}}Service {
     /**
      * insert
      *
-     * @param entity
+     * @param entity entity
      * @return pk
      */
     {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity);
@@ -23,7 +23,7 @@ public interface {{.TableClassName}}Service {
     /**
      * batch insert
      *
-     * @param list
+     * @param list list
      * @return row count
      */
     int batchInsert(List<{{.TableClassName}}> list);
@@ -39,7 +39,7 @@ public interface {{.TableClassName}}Service {
     /**
      * modify
      *
-     * @param entity
+     * @param entity entity
      * @return row count
      */
     int update({{.TableClassName}} entity);
@@ -47,7 +47,7 @@ public interface {{.TableClassName}}Service {
     /**
      * query by primary key
      *
-     * @param {{.TablePrimaryKeyFieldName}}
+     * @param {{.TablePrimaryKeyFieldName}} pk
      * @return entity
      */
     {{.TableClassName}} getById({{.TablePrimaryKeyFieldType}} {{.TablePrimaryKeyFieldName}});
@@ -55,34 +55,34 @@ public interface {{.TableClassName}}Service {
     /**
      * query by condition (one)
      *
-     * @param condition
+     * @param condition condition
      * @return entity
      */
-    {{.TableClassName}} findOne(@Param("condition") {{.TableClassName}} condition);
+    {{.TableClassName}} findOne({{.TableClassName}} condition);
 
     /**
      * query by condition (paging)
      *
-     * @param condition
+     * @param condition condition
      * @return page count
      */
-    int findPageCount(@Param("condition") {{.TableClassName}} condition);
+    int findPageCount({{.TableClassName}} condition);
 
     /**
      * query by condition (paging)
      *
-     * @param condition
-     * @param start
-     * @param limit
+     * @param condition condition
+     * @param start start
+     * @param limit limit
      * @return result set
      */
-    List<{{.TableClassName}}> findPage(@Param("condition") {{.TableClassName}} condition, @Param("start") int start, @Param("limit") int limit);
+    List<{{.TableClassName}}> findPage({{.TableClassName}} condition, int start, int limit);
 
     /**
      * query by condition (all)
      *
-     * @param condition
+     * @param condition condition
      * @return result set
      */
-    List<{{.TableClassName}}> findAll(@Param("condition") {{.TableClassName}} condition);
+    List<{{.TableClassName}}> findAll({{.TableClassName}} condition);
 }

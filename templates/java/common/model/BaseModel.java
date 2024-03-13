@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Accessors(chain = true)
 public class BaseModel implements Serializable {
     @Schema(description = "Key", example = "1")
-    private Long transactionNumber;
+    private Integer transactionNumber;
 
     /**
      * 数据修改版本号 (用于乐观并发控制)
