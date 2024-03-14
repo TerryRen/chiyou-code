@@ -1,0 +1,88 @@
+package {{.BasePackage}}.{{.ServiceSubPackage}};
+
+import {{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}};
+import java.util.List;
+
+/**
+ *
+ * {{.TableComment}}
+ *
+ * @author {{.Author}}
+ * @version {{.Version}}
+ * @date {{.CreateTime}}
+ */
+public interface {{.TableClassName}}Service {
+    /**
+     * insert
+     *
+     * @param entity entity
+     * @return pk
+     */
+    {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity);
+
+    /**
+     * batch insert
+     *
+     * @param list list
+     * @return row count
+     */
+    int batchInsert(List<{{.TableClassName}}> list);
+
+    /**
+     * delete
+     *
+     * @param entity
+     * @return row count
+     */
+    int delete({{.TableClassName}} entity);
+
+    /**
+     * modify
+     *
+     * @param entity entity
+     * @return row count
+     */
+    int update({{.TableClassName}} entity);
+
+    /**
+     * query by primary key
+     *
+     * @param {{.TablePrimaryKeyFieldName}} pk
+     * @return entity
+     */
+    {{.TableClassName}} getById({{.TablePrimaryKeyFieldType}} {{.TablePrimaryKeyFieldName}});
+
+    /**
+     * query by condition (one)
+     *
+     * @param condition condition
+     * @return entity
+     */
+    {{.TableClassName}} findOne({{.TableClassName}} condition);
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition condition
+     * @return page count
+     */
+    int findPageCount({{.TableClassName}} condition);
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition condition
+     * @param start start
+     * @param limit limit
+     * @return result set
+     */
+    List<{{.TableClassName}}> findPage({{.TableClassName}} condition, int start, int limit);
+
+    /**
+     * query by condition (all)
+     *
+     * @param condition condition
+     * @return result set
+     */
+    List<{{.TableClassName}}> findAll({{.TableClassName}} condition);
+}

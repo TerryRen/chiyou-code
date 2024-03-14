@@ -1,5 +1,5 @@
 # chiyou-code
-code gen
+code gen (默认 Spring 3.x Java 17)
 
 #### 安装教程
 
@@ -25,12 +25,12 @@ cobra-cli add csharp
 -- sys_platform definition
 
 CREATE TABLE `sys_platform` (
-  `TransactionNumber` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `TransactionNumber` int NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `PlatformCode` varchar(50) NOT NULL DEFAULT '' COMMENT '平台编码',
   `PlatformName` varchar(128) NOT NULL DEFAULT '' COMMENT '平台名称',
   `PlatformUrl` varchar(255) NOT NULL COMMENT '平台URL',
   `PlatformIcon` varchar(50) NOT NULL DEFAULT '' COMMENT '平台图标',
-  `Status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '状态: 1-启用; 0-停用',
+  `Status` tinyint(3) NOT NULL DEFAULT '1' COMMENT '状态: 1-启用; 0-停用',
   `Description` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
   `Version` int NOT NULL DEFAULT '0' COMMENT '版本',
   `InUser` varchar(128) NOT NULL COMMENT '创建人',
@@ -44,4 +44,4 @@ CREATE TABLE `sys_platform` (
 
 #### 使用说明
 
-1.  `mmc java` or `mmc_amd64.exe java --config .mmc.newegg.yml`
+1.  `mmc java` or `mmc_amd64.exe java --config .mmc.yml`

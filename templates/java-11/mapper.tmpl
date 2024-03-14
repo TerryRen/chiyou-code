@@ -1,0 +1,94 @@
+package {{.BasePackage}}.{{.DaoSubPackage}};
+
+import {{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}};
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+/**
+ *
+ * {{.TableComment}}
+ *
+ * @author {{.Author}}
+ * @version {{.Version}}
+ * @date {{.CreateTime}}
+ */
+@Mapper
+@Repository
+public interface {{.TableClassName}}Mapper {
+    /**
+     * insert
+     *
+     * @param entity entity
+     * @return pk
+     */
+    {{.TablePrimaryKeyFieldType}} insert({{.TableClassName}} entity);
+
+    /**
+     * batch insert
+     *
+     * @param list list
+     * @return row count
+     */
+    int batchInsert(List<{{.TableClassName}}> list);
+
+    /**
+     * delete
+     *
+     * @param entity entity
+     * @return row count
+     */
+    int delete({{.TableClassName}} entity);
+
+    /**
+     * modify
+     *
+     * @param entity entity
+     * @return row count
+     */
+    int update({{.TableClassName}} entity);
+
+    /**
+     * query by primary key
+     *
+     * @param {{.TablePrimaryKeyFieldName}} pk
+     * @return entity
+     */
+    {{.TableClassName}} getById({{.TablePrimaryKeyFieldType}} {{.TablePrimaryKeyFieldName}});
+
+    /**
+     * query by condition (one)
+     *
+     * @param condition condition
+     * @return entity
+     */
+    {{.TableClassName}} findOne(@Param("condition") {{.TableClassName}} condition);
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition condition
+     * @return page count
+     */
+    int findPageCount(@Param("condition") {{.TableClassName}} condition);
+
+    /**
+     * query by condition (paging)
+     *
+     * @param condition condition
+     * @param start start
+     * @param limit limit
+     * @return result set
+     */
+    List<{{.TableClassName}}> findPage(@Param("condition") {{.TableClassName}} condition, @Param("start") int start, @Param("limit") int limit);
+
+    /**
+     * query by condition (all)
+     *
+     * @param condition condition
+     * @return result set
+     */
+    List<{{.TableClassName}}> findAll(@Param("condition") {{.TableClassName}} condition);
+}

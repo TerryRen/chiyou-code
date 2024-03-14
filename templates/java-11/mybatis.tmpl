@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="{{.BasePackage}}.{{.DaoSubPackage}}.{{.TableClassName}}Mapper">
+
+    <resultMap id="RM_{{.TableClassName}}" type="{{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}}">
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>
+    {{- else -}}
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>{{"\n"}}
+    {{- end -}}
+{{- end }}
+    </resultMap>
+
+    <!-- SELECT common columns -->
+    <sql id="columns">
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+    </sql>
+
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
+        INSERT INTO `{{.TableName}}`
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+        ) 
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} #{item.{{$el.ClassFieldName}}}
+    {{- else -}}
+            {{- "        " -}} #{item.{{$el.ClassFieldName}}}{{",\n"}}
+    {{- end -}}
+{{- end }}
+        )
+        </foreach>
+    </insert>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="{{.TablePrimaryKeyFieldName}}">
+        INSERT INTO `{{.TableName}}`
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} `{{$el.ColumnName}}`
+    {{- else -}}
+            {{- "        " -}} `{{$el.ColumnName}}`{{",\n"}}
+    {{- end -}}
+{{- end }}
+        ) 
+        VALUES
+        (
+{{ range $i, $el := .Columns -}}
+    {{- if eq $i (sub (len $.Columns) 1) -}}
+            {{- "        " -}} #{ {{- $el.ClassFieldName -}} }
+    {{- else -}}
+            {{- "        " -}} #{ {{- $el.ClassFieldName -}} }{{",\n"}}
+    {{- end -}}
+{{- end }}
+        )
+    </insert>
+
+    <sql id="update_sql">
+        <set>
+{{- range $i, $el := .Columns -}}
+{{- if in $el.ColumnName $.UpdateStatementIgnoreColumns -}}
+{{- else }}
+            <if test="{{$el.ClassFieldName}} != null">
+                `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }{{","}}
+            </if>
+{{- end -}}
+{{end}}
+            <!-- Version Optimistic Locking -->
+            <if test="version != null">
+                `Version` = `Version` + 1
+            </if>
+        </set>
+    </sql>
+
+    <update id="update">
+        UPDATE `{{.TableName}}`
+        <include refid="update_sql"/>
+        WHERE
+{{- range $i, $el := .Columns -}}
+{{- if $el.IsPrimaryKey }}
+        `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }
+{{- end -}}
+{{end}}
+    </update>
+
+    <delete id="delete">
+        UPDATE `{{.TableName}}`
+        SET `deleted` = 1, `LastEditUser` = #{lastEditUser}, `LastEditDate` = #{lastEditDate}
+        WHERE
+        <trim prefixOverrides="AND">
+{{- range $i, $el := .Columns -}}
+{{- if in $el.ColumnName $.DeleteStatementIgnoreColumns -}}
+{{- else }}
+            <if test="{{$el.ClassFieldName}} != null">
+                AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} }
+            </if>
+{{- end -}}
+{{end}}
+        </trim>
+        AND `deleted` = 0
+    </delete>
+
+    <sql id="findPage_where">
+        <where>
+{{- range $i, $el := .Columns }}
+            <if test="condition.{{$el.ClassFieldName}} != null">
+                AND `{{$el.ColumnName}}` = #{condition. {{- $el.ClassFieldName -}} }
+            </if>
+{{- end}}
+        </where>
+    </sql>
+
+    <select id="getById" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableName}}`
+        WHERE
+        <trim prefixOverrides="AND">
+{{- range $i, $el := .Columns -}}
+{{- if $el.IsPrimaryKey }}
+            AND `{{$el.ColumnName}}` = #{ {{- $el.ClassFieldName -}} } 
+{{- end -}}
+{{end}}
+        </trim>
+        AND `deleted` = 0
+    </select>
+
+    <select id="findPageCount" resultType="Integer">
+        SELECT COUNT(*) 
+        FROM `{{.TableName}}`
+        <include refid="findPage_where"/>
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findPage" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+        LIMIT #{start}, #{limit};
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findOne" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+        LIMIT 1;
+    </select>
+
+    <!-- Attention $ Sql Inject Issue -->
+    <select id="findAll" resultMap="RM_{{.TableClassName}}">
+        SELECT
+        <include refid="columns"/>
+        FROM `{{.TableName}}`
+        <include refid="findPage_where"/>
+        <if test="condition.sortColumns != null">
+            ORDER BY ${condition.sortColumns}
+        </if>
+    </select>
+
+</mapper>

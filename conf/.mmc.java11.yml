@@ -1,0 +1,56 @@
+log:
+  logLevel: "info"  
+  logPath: "./logs"
+  logFileName: "mmc.log"
+  logFileRotationHours: 24
+  logFileMaxAgeHours: 240
+db:
+  driverName: "mysql"
+  dataSourceName: "{user}:{password}@tcp({ip}:{port})/{db}"
+  dataBase: "{db}"
+java:
+  templateFolder: "./templates/java-11"
+  templateBaseClassFolder: "common"
+  templateMap:
+    model: "model.tmpl"
+    model_field: "model.field.tmpl"
+    mybatis: "mybatis.tmpl"
+    mapper: "mapper.tmpl"
+    service: "service.tmpl"
+    service_impl: "service.impl.tmpl"
+  outputFolder: "./output/java"
+  modelSubFolder: "model/po"
+  daoSubFolder: "mapper"
+  serviceSubFolder: "service"
+  author: "mmc"
+  version: "Version 1.0"
+  basePackage: "{base-package}"
+  modelSubPackage: "model.po"
+  daoSubPackage: "mapper"
+  serviceSubPackage: "service"
+  ignorePrefix: "test_"
+  ignoreSuffix: "_test"
+  includeTableRegexs:
+    - "^sys.*$"
+  excludeTableRegexs:
+    - "^tmp.*$"
+  baseModeltIgnoreColumns:
+    - "TransactionNumber"
+    - "Version"
+    - "InUser"
+    - "InDate"
+    - "LastEditUser"
+    - "LastEditDate"
+    - "Deleted"
+  updateStatementIgnoreColumns:
+    - "TransactionNumber"
+    - "Version"
+    - "InUser"
+    - "InDate"
+    - "Deleted"
+  deleteStatementIgnoreColumns:
+    - "InUser"
+    - "InDate"
+    - "LastEditUser"
+    - "LastEditDate"
+    - "Deleted"
