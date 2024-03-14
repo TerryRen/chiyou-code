@@ -1,6 +1,15 @@
 # chiyou-code
 code gen (默认 Spring 3.x Java 17)
 
+**Spring 3.x (Java 17)**
+
+> lombok
+
+> springdoc-openapi-starter-webmvc-ui:2.3.0
+
+> springboot:3.2.2
+
+
 #### 安装教程
 
 1.  初始化步骤

@@ -715,12 +715,6 @@ func RenderJava(tables map[string]*SqlTable, renderConf conf.RenderConfig) (err 
 	if err = initOutputFolder(renderConf); err != nil {
 		return err
 	}
-	// Copy Base Class
-	if err = sos.CopyFolder(
-		filepath.Join(renderConf.TemplateFolder, renderConf.TemplateBaseClassFolder),
-		filepath.Join(renderConf.OutputFolder, renderConf.TemplateBaseClassFolder)); err != nil {
-		return err
-	}
 	// ExcludeTableRegexs complie
 	ExcludeTableRegexs, err := regex.RegexCompile(renderConf.ExcludeTableRegexs)
 	if err != nil {
