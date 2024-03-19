@@ -7,9 +7,9 @@
     <resultMap id="RM_{{.TableClassName}}" type="{{.BasePackage}}.{{.ModelSubPackage}}.{{.TableClassName}}">
 {{ range $i, $el := .Columns -}}
     {{- if eq $i (sub (len $.Columns) 1) -}}
-            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" jdbcType="{{$el.JdbcType}}" column="{{$el.ColumnName}}"/>
     {{- else -}}
-            {{- "        " -}} <result property="{{$el.ClassFieldName}}" column="{{$el.ColumnName}}"/>{{"\n"}}
+            {{- "        " -}} <result property="{{$el.ClassFieldName}}" jdbcType="{{$el.JdbcType}}" column="{{$el.ColumnName}}"/>{{"\n"}}
     {{- end -}}
 {{- end }}
     </resultMap>

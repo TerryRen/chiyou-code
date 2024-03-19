@@ -126,6 +126,8 @@ type MybatisColumnView struct {
 	IsPrimaryKey bool
 	// Column Name
 	ColumnName string
+	// JDBC Type
+	JdbcType string
 	// Class Field Name
 	ClassFieldName string
 }
@@ -563,6 +565,7 @@ func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *Sq
 			ColumnOrdinal:  column.ColumnOrdinal,
 			IsPrimaryKey:   false,
 			ColumnName:     column.ColumnName,
+			JdbcType:       strings.ToUpper(column.DataType),
 			ClassFieldName: column.ClassFieldName,
 		}
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
