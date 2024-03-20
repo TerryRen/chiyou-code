@@ -568,6 +568,9 @@ func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *Sq
 			JdbcType:       strings.ToUpper(column.DataType),
 			ClassFieldName: column.ClassFieldName,
 		}
+		if columnView.JdbcType == "INT" {
+			columnView.JdbcType = "INTEGER"
+		}
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
 			columnView.IsPrimaryKey = true
 			mybatisView.TablePrimaryKeyFieldName = column.ClassFieldName
