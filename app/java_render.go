@@ -46,6 +46,7 @@ var (
 		"VARCHAR":   JAVA_TYPE_STRING,
 		"BLOB":      JAVA_TYPE_STRING,
 		"TEXT":      JAVA_TYPE_STRING,
+		"JSON":      JAVA_TYPE_STRING,
 		"NUMERIC":   JAVA_TYPE_BIGDECIMAL,
 		"DECIMAL":   JAVA_TYPE_BIGDECIMAL,
 		"BIT":       JAVA_TYPE_BOOLEAN,
@@ -325,11 +326,13 @@ func buildStringFieldAnnotation(column *SqlColumn) (annotations []string) {
 	annotations = append(annotations, buildAnnotation("@Schema", ps1))
 
 	// @Size
-	ps2 := []string{
-		buildAnnotationProperty("min", "0", false),
-		buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
+	if column.CharMaxLength != nil {
+		ps2 := []string{
+			buildAnnotationProperty("min", "0", false),
+			buildAnnotationProperty("max", strconv.Itoa(*column.CharMaxLength), false),
+		}
+		annotations = append(annotations, buildAnnotation("@Size", ps2))
 	}
-	annotations = append(annotations, buildAnnotation("@Size", ps2))
 
 	// @NotBlank
 	if !column.Nullable {
