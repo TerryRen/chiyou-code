@@ -42,10 +42,17 @@ const (
 
 var (
 	JAVA_TYPE_MAP = map[string]string{
-		"CHAR":      JAVA_TYPE_STRING,
-		"VARCHAR":   JAVA_TYPE_STRING,
-		"BLOB":      JAVA_TYPE_STRING,
-		"TEXT":      JAVA_TYPE_STRING,
+		"CHAR":    JAVA_TYPE_STRING,
+		"VARCHAR": JAVA_TYPE_STRING,
+		"BLOB":    JAVA_TYPE_STRING,
+		// 最多 255 字符
+		"TINYTEXT": JAVA_TYPE_STRING,
+		// 最多 65,535 字符
+		"TEXT": JAVA_TYPE_STRING,
+		// 最多 16,777,215 字符
+		"MEDIUMTEXT": JAVA_TYPE_STRING,
+		// 最多 4,294,967,295 字符
+		"LONGTEXT":  JAVA_TYPE_STRING,
 		"JSON":      JAVA_TYPE_STRING,
 		"NUMERIC":   JAVA_TYPE_BIGDECIMAL,
 		"DECIMAL":   JAVA_TYPE_BIGDECIMAL,
@@ -67,6 +74,19 @@ var (
 		"TIME":      JAVA_TYPE_TIME,
 		"TIMESTAMP": JAVA_TYPE_TIMESTAMP,
 		"DATETIME":  JAVA_TYPE_DATE_TIME,
+	}
+
+	JDBC_SPEC_TYPE_MAP = map[string]string{
+		// 最多 255 字符
+		"TINYTEXT": "VARCHAR",
+		// 最多 65,535 字符
+		"TEXT": "LONGVARCHAR",
+		// 最多 16,777,215 字符
+		"MEDIUMTEXT": "LONGVARCHAR",
+		// 最多 4,294,967,295 字符
+		"LONGTEXT": "LONGVARCHAR",
+		"JSON":     "VARCHAR",
+		"INT":      "INTEGER",
 	}
 )
 
@@ -571,8 +591,9 @@ func renderMybatis(t *template.Template, renderConf conf.RenderConfig, table *Sq
 			JdbcType:       strings.ToUpper(column.DataType),
 			ClassFieldName: column.ClassFieldName,
 		}
-		if columnView.JdbcType == "INT" {
-			columnView.JdbcType = "INTEGER"
+		// 特殊 JDBC 类型 适配
+		if sp, ok := JDBC_SPEC_TYPE_MAP[columnView.JdbcType]; ok {
+			columnView.JdbcType = sp
 		}
 		if column.ColumnKey != nil && (*column.ColumnKey) == "PRI" {
 			columnView.IsPrimaryKey = true
